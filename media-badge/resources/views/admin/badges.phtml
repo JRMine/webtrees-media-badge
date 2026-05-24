@@ -1,0 +1,111 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @var \Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule $module
+ * @var array<int,array<string,mixed>> $rules
+ * @var string $title
+ */
+?>
+
+<h2><?= e($title) ?></h2>
+
+<div class="d-flex gap-2 mb-4">
+    <a class="btn btn-primary" href="<?= e(route('module', ['module' => $module->name(), 'action' => 'BadgeEdit'])) ?>">
+        Neue Regel
+    </a>
+
+    <a class="btn btn-outline-secondary" href="<?= e(route('module', ['module' => $module->name(), 'action' => 'Admin'])) ?>">
+        Zur Konfiguration
+    </a>
+</div>
+
+<table class="table table-bordered table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Aktiv</th>
+            <th>Schlüssel</th>
+            <th>Match</th>
+            <th>Darstellung</th>
+            <th>Vorschau</th>
+            <th>Sort.</th>
+            <th>Aktionen</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php foreach ($rules as $rule) : ?>
+            <?php
+            $render_mode = (string) ($rule['render_mode'] ?? 'text');
+            $icon_type   = (string) ($rule['icon_type'] ?? 'class');
+            $icon_value  = (string) ($rule['icon_value'] ?? '');
+            $label_mode  = (string) ($rule['label_mode'] ?? 'value');
+            $label       = (string) ($rule['label'] ?? '');
+            $preview_label = match ($label_mode) {
+                'none'  => '',
+                'fixed' => $label !== '' ? $label : 'Beispielwert',
+                default => 'Beispielwert',
+            };
+
+            if ($render_mode === 'auto') {
+                $render_mode = $icon_value !== '' ? 'icon-text' : 'text';
+            }
+
+            $show_icon = $render_mode !== 'text' && $icon_value !== '';
+            $show_text = $render_mode !== 'icon' && $preview_label !== '';
+
+            $match_type = (string) ($rule['match_type'] ?? '');
+            $match_value = (string) ($rule['match_value'] ?? '');
+            $match_display = match ($match_type) {
+                'exact'    => 'exakt: ' . $match_value,
+                'contains' => 'enthält: ' . $match_value,
+                'regex'    => 'regex: ' . $match_value,
+                default    => 'beliebiger Wert',
+            };
+
+            $preview_class = trim((string) ($rule['class'] ?? 'mbg-badge mbg-badge--generic'));
+            if (!$show_text && $show_icon) {
+                $preview_class .= ' mbg-badge--icon-only';
+            }
+            ?>
+            <tr>
+                <td><?= !empty($rule['enabled']) ? 'Ja' : 'Nein' ?></td>
+                <td><code><?= e((string) ($rule['key'] ?? '')) ?></code></td>
+                <td><?= e($match_display) ?></td>
+                <td><?= e((string) ($rule['render_mode'] ?? 'text')) ?></td>
+                <td>
+                    <span class="<?= e($preview_class) ?>">
+                        <?php if ($show_icon) : ?>
+                            <span class="mbg-badge__icon" aria-hidden="true">
+                                <?php if ($icon_type === 'class') : ?>
+                                    <i class="<?= e($icon_value) ?>"></i>
+                                <?php else : ?>
+                                    <?= e($icon_value) ?>
+                                <?php endif ?>
+                            </span>
+                        <?php endif ?>
+
+                        <?php if ($show_text) : ?>
+                            <span class="mbg-badge__label"><?= e($preview_label) ?></span>
+                        <?php endif ?>
+                    </span>
+                </td>
+                <td><?= e((string) ($rule['sort_order'] ?? 0)) ?></td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <a class="btn btn-sm btn-outline-primary"
+                           href="<?= e(route('module', ['module' => $module->name(), 'action' => 'BadgeEdit', 'id' => (string) ($rule['id'] ?? '')])) ?>">
+                            Bearbeiten
+                        </a>
+
+                        <form method="post" action="<?= e(route('module', ['module' => $module->name(), 'action' => 'BadgeDelete'])) ?>" onsubmit="return confirm('Regel wirklich löschen?');">
+                            <?= csrf_field() ?>
+                            <input type="hidden" name="id" value="<?= e((string) ($rule['id'] ?? '')) ?>">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Löschen</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        <?php endforeach ?>
+    </tbody>
+</table>
