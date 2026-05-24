@@ -105,10 +105,11 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
 
         return $this->viewResponse($this->name() . '::admin/config', [
             'module'         => $this,
-            'note_keys_text' => implode("\n", self::noteKeys()),
+            'note_keys_text' => implode("\n", self::configuredNoteKeys() !== [] ? self::configuredNoteKeys() : self::defaultNoteKeys()),
             'title'          => I18N::translate('Media Badge settings'),
         ]);
     }
+
 
 public function postAdminAction(ServerRequestInterface $request): ResponseInterface
 {
@@ -221,15 +222,36 @@ public function postAdminAction(ServerRequestInterface $request): ResponseInterf
         ]));
     }
 
-public static function noteKeys(): array
-{
-    $value = DB::table('module_setting')
-        ->where('module_name', '=', self::MODULE_NAME)
-        ->where('setting_name', '=', self::PREF_NOTE_KEYS)
-        ->value('setting_value');
+        private static function defaultNoteKeys(): array
+    {
+        return ['MEDIA LICENCE'];
+    }
 
-    return self::normalizeNoteKeys((string) ($value ?? ''));
-}
+    private static function configuredNoteKeys(): array
+    {
+        $value = DB::table('module_setting')
+            ->where('module_name', '=', self::MODULE_NAME)
+            ->where('setting_name', '=', self::PREF_NOTE_KEYS)
+            ->value('setting_value');
+
+        return self::normalizeNoteKeys((string) ($value ?? ''));
+    }
+
+    private static function primaryNoteKey(): string
+    {
+        $keys = self::noteKeys();
+
+        return $keys[0] ?? self::defaultNoteKeys()[0];
+    }
+
+    
+    public static function noteKeys(): array
+    {
+        $keys = self::configuredNoteKeys();
+
+        return $keys !== [] ? $keys : self::defaultNoteKeys();
+    }
+
 
 
     public static function badgeRules(): array
@@ -402,12 +424,14 @@ private static function normalizeNoteKeys(string $text): array
 }
 
 
-    private static function defaultBadgeRules(): array
+private static function defaultBadgeRules(): array
     {
+        $default_key = self::primaryNoteKey();
+
         return [
             self::normalizeRule([
                 'enabled'     => true,
-                'key'         => 'MEDIA LICENCE',
+                'key'         => $default_key,
                 'match_type'  => 'exact',
                 'match_value' => 'CC BY 4.0',
                 'label'       => 'CC BY 4.0',
@@ -416,9 +440,10 @@ private static function normalizeNoteKeys(string $text): array
                 'sort_order'  => 10,
                 'title'       => 'Creative Commons Attribution 4.0',
             ]),
+            
             self::normalizeRule([
                 'enabled'     => true,
-                'key'         => 'MEDIA LICENCE',
+                'key'         => $default_key,
                 'match_type'  => 'exact',
                 'match_value' => 'CC BY-SA 4.0',
                 'label'       => 'CC BY-SA 4.0',
@@ -429,7 +454,7 @@ private static function normalizeNoteKeys(string $text): array
             ]),
             self::normalizeRule([
                 'enabled'     => true,
-                'key'         => 'MEDIA LICENCE',
+                'key'         => $default_key,
                 'match_type'  => 'exact',
                 'match_value' => 'Public Domain',
                 'label'       => 'Public Domain',
@@ -440,7 +465,7 @@ private static function normalizeNoteKeys(string $text): array
             ]),
             self::normalizeRule([
                 'enabled'     => true,
-                'key'         => 'MEDIA LICENCE',
+                'key'         => $default_key,
                 'match_type'  => 'contains',
                 'match_value' => 'private',
                 'label'       => 'Private',
@@ -457,7 +482,7 @@ private static function normalizeNoteKeys(string $text): array
         return [
             'id'          => trim((string) ($rule['id'] ?? uniqid('badge_', true))),
             'enabled'     => (bool) ($rule['enabled'] ?? true),
-            'key'         => trim((string) ($rule['key'] ?? 'MEDIA LICENCE')),
+            'key'         => trim((string) ($rule['key'] ?? self::primaryNoteKey())),
             'match_type'  => trim((string) ($rule['match_type'] ?? 'exact')),
             'match_value' => trim((string) ($rule['match_value'] ?? '')),
             'label'       => trim((string) ($rule['label'] ?? '')),
@@ -467,4 +492,5 @@ private static function normalizeNoteKeys(string $text): array
             'title'       => trim((string) ($rule['title'] ?? '')),
         ];
     }
+
 }
