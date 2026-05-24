@@ -111,13 +111,16 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
 
     public function postAdminAction(ServerRequestInterface $request): ResponseInterface
     {
-        $body = (array) ($request->getParsedBody() ?? []);
-        $note_keys_text = (string) ($body['note_keys_text'] ?? '');
+     //   $body = (array) ($request->getParsedBody() ?? []);
+     //   $note_keys_text = (string) ($body['note_keys_text'] ?? '');
 
-        $keys = self::normalizeNoteKeys($note_keys_text);
-        $this->setPreference(self::PREF_NOTE_KEYS, implode("\n", $keys));
+     //   $keys = self::normalizeNoteKeys($note_keys_text);
+     //   $this->setPreference(self::PREF_NOTE_KEYS, implode("\n", $keys));
 
-        return redirect($this->getConfigLink());
+     //   return redirect($this->getConfigLink());
+        $this->setPreference(self::PREF_NOTE_KEYS, 'MEDIA RIGHTS');
+
+    return redirect($this->getConfigLink());
     }
 
     public function getBadgesAction(ServerRequestInterface $request): ResponseInterface
