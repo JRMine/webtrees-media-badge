@@ -3,48 +3,47 @@
 declare(strict_types=1);
 
 /**
+ * @var \Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule $module
  * @var string $note_keys_text
  * @var string $title
- * @var \Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule $module
  */
 ?>
 
-<h1><?= e($title) ?></h1>
+<div class="row">
+    <div class="col-lg-8">
+        <h2><?= e($title) ?></h2>
 
-<p>
-    Hier kannst du festlegen, nach welchen Schlüsseln das Modul in verknüpften Shared Notes oder Inline-Notes sucht.
-</p>
+        <p class="text-muted">
+            Hier legst du fest, nach welchen NOTE-Schlüsseln das Modul in Medien-Notizen sucht.
+            Pro Zeile ein Schlüssel.
+        </p>
 
-<p>
-    Ein Schlüssel pro Zeile, zum Beispiel:
-</p>
+        <form method="post" action="<?= e(route('module', ['module' => $module->name(), 'action' => 'Admin'])) ?>">
+            <?= csrf_field() ?>
 
-<pre>MEDIA LICENCE</pre>
+            <div class="mb-3">
+                <label class="form-label" for="note_keys_text">Note-Keys</label>
+                <textarea
+                    class="form-control font-monospace"
+                    id="note_keys_text"
+                    name="note_keys_text"
+                    rows="6"
+                ><?= e($note_keys_text) ?></textarea>
+                <div class="form-text">
+                    Beispiel: MEDIA LICENCE oder MEDIA RIGHTS
+                </div>
+            </div>
 
-<form method="post" action="<?= e(route('module', ['module' => $module->name(), 'action' => 'Admin'])) ?>">
-    <?= csrf_field() ?>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    Speichern
+                </button>
 
-    <div class="row mb-3">
-        <label for="note_keys_text" class="col-sm-3 col-form-label">
-            Note keys
-        </label>
-
-        <div class="col-sm-9">
-            <textarea
-                class="form-control"
-                id="note_keys_text"
-                name="note_keys_text"
-                rows="6"
-            ><?= e($note_keys_text) ?></textarea>
-        </div>
+                <a class="btn btn-outline-secondary"
+                   href="<?= e(route('module', ['module' => $module->name(), 'action' => 'Badges'])) ?>">
+                    Badge-Regeln
+                </a>
+            </div>
+        </form>
     </div>
-
-    <div class="row mb-3">
-        <div class="offset-sm-3 col-sm-9">
-            <button type="submit" class="btn btn-primary">
-                <?= view('icons/save') ?>
-                <?= e('Speichern') ?>
-            </button>
-        </div>
-    </div>
-</form>
+</div>
