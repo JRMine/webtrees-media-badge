@@ -32,6 +32,50 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 - Einstiegspunkt für das Laden des Moduls in webtrees ergänzt
 - Grundstruktur für Admin-Seiten vorbereitet, damit erste Konfigurationsseiten testbar werden
 
+## [0.2.0-beta.2] - 2026-05-24
+
+### Added
+- Erweiterte Badge-Regeln mit konfigurierbaren Darstellungsmodi:
+  - `text`
+  - `icon`
+  - `icon-text`
+  - `auto`
+- Unterstützung zusätzlicher Icon-Typen:
+  - CSS-Klassen (`class`)
+  - Textwerte (`text`)
+  - Bild-/SVG-URLs (`url`)
+- Erweiterte Regeloptionen für:
+  - Badge-Text (`label_mode`)
+  - Tooltip (`tooltip_mode`)
+  - Position vor/nach dem Medientitel
+  - Sortierreihenfolge
+- Badge-Regelverwaltung im Admin-Bereich erweitert
+- Vorschau für Badge-Regeln in der Admin-Übersicht
+- Unterstützung für Bild-/SVG-Icons in der Medienansicht
+- Direkte Navigation von der Modul-Konfiguration zur Badge-Regelverwaltung
+
+### Changed
+- Standard-Badge-Regeln wurden auf robustere Default-Werte umgestellt
+- Darstellung und Inhalt der Badges wurden sauberer getrennt:
+  - Inhalte stammen aus den Shared Notes / NOTE-Einträgen
+  - Darstellung wird über Regeln gesteuert
+- Konfiguration der globalen NOTE-Schlüssel wurde stabilisiert
+- Mehrere globale NOTE-Schlüssel werden unterstützt und zeilenweise verarbeitet
+- Badge-Rendering auf der Medienseite wurde erweitert und flexibler gemacht
+
+### Fixed
+- Fehler bei der Speicherung von Modul-Einstellungen behoben
+- Interner Modulname für Custom-Module korrekt an webtrees angepasst
+- HTTP-500/Fatal-Error durch doppelte Methodendefinitionen in `MediaBadgeModule.php` behoben
+- Probleme mit der Badge-Anzeige nach dem Speichern der NOTE-Schlüssel behoben
+- Problematische Emoji-basierte Default-Werte entfernt
+- Speicherung von Badge-Regeln robuster gemacht, um Probleme mit Datenbank-/Kollationsgrenzen zu vermeiden
+
+### Notes
+- Diese Version ist weiterhin als Pre-Release / Beta gedacht
+- Externe Bild-/SVG-URLs als Icons werden unterstützt, hängen aber von der Erreichbarkeit des jeweiligen Hosts ab
+- Ein möglicher nächster Ausbauschritt wäre die Unterstützung lokaler Icons innerhalb des Moduls
+
 ### Notes
 - Dieses Release ist eine erste testbare Vorabversion
 - Fokus liegt auf Architektur, Modul-Loading, Badge-Erkennung und erster Admin-Struktur
