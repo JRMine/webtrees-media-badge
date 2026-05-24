@@ -1,6 +1,6 @@
 modules_v4/media-badge/
+├── module.php
 ├── MediaBadgeModule.php
-├── metadata.json
 └── resources/
     ├── css/
     │   └── media-badge.css
