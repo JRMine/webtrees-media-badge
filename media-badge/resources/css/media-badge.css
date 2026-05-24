@@ -34,3 +34,16 @@
     background: #fee2e2;
     color: #b91c1c;
 }
+
+.mbg-admin-page {
+    max-width: 980px;
+}
+
+.mbg-admin-help {
+    color: #6b7280;
+    max-width: 70ch;
+}
+
+.mbg-admin-page code {
+    font-size: 0.95em;
+}
