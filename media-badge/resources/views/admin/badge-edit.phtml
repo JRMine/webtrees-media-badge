@@ -2,113 +2,83 @@
 
 declare(strict_types=1);
 
-use Fisharebest\Webtrees\Fact;
-use Fisharebest\Webtrees\Family;
-use Fisharebest\Webtrees\Individual;
-use Fisharebest\Webtrees\Location;
-use Fisharebest\Webtrees\Media;
-use Fisharebest\Webtrees\Note;
-use Fisharebest\Webtrees\Source;
-use Fisharebest\Webtrees\Tree;
-use Illuminate\Support\Collection;
-
 /**
- * @var Collection<int,Fact>       $clipboard_facts
- * @var Collection<int,Family>     $linked_families
- * @var Collection<int,Individual> $linked_individuals
- * @var Collection<int,Location>   $linked_locations
- * @var Collection<int,Note>       $linked_notes
- * @var Collection<int,Source>     $linked_sources
- * @var Media                      $record
- * @var Tree                       $tree
+ * @var array<string,mixed> $rule
+ * @var string $title
+ * @var \Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule $module
  */
 
-$extractMediaLicence = static function (Media $record): ?string {
-    foreach ($record->facts(['NOTE']) as $fact) {
-        $note_text = '';
-
-        $target = $fact->target();
-        if ($target instanceof Note) {
-            $note_text = $target->getNote();
-        } else {
-            $note_text = $fact->value();
-        }
-
-        if (preg_match('/^\s*MEDIA LICENCE:\s*(.+)\s*$/mi', $note_text, $match) === 1) {
-            return trim($match[1]);
-        }
-    }
-
-    return null;
-};
-
-$getBadgeClass = static function (?string $licence): string {
-    if ($licence === null || $licence === '') {
-        return 'mbg-badge mbg-badge--generic';
-    }
-
-    $normalized = strtolower(trim($licence));
-
-    if ($normalized === 'cc by 4.0') {
-        return 'mbg-badge mbg-badge--ccby';
-    }
-
-    if ($normalized === 'cc by-sa 4.0') {
-        return 'mbg-badge mbg-badge--ccbysa';
-    }
-
-    if ($normalized === 'public domain' || $normalized === 'gemeinfrei') {
-        return 'mbg-badge mbg-badge--public-domain';
-    }
-
-    if (
-        $normalized === 'private'
-        || $normalized === 'private / no reuse'
-        || $normalized === 'privat'
-        || $normalized === 'nicht nachnutzen'
-    ) {
-        return 'mbg-badge mbg-badge--private';
-    }
-
-    return 'mbg-badge mbg-badge--generic';
-};
-
-$licence = $extractMediaLicence($record);
-$badge_class = $getBadgeClass($licence);
-
+use function route;
 ?>
 
-<?= view('media-page-pending', ['record' => $record]) ?>
+<div class="mbg-admin-page">
+    <h2><?= e($title) ?></h2>
 
-<div class="d-flex mb-4">
-    <h2 class="wt-page-title mx-auto">
-        <span><?= $record->fullName() ?></span>
+    <form method="post" action="<?= e(route('module', ['module' => $module->name(), 'action' => 'BadgeEdit'])) ?>">
+        <?= csrf_field() ?>
 
-        <?php if ($licence !== null && $licence !== '') : ?>
-            <span class="<?= e($badge_class) ?>">
-                <?= e($licence) ?>
-            </span>
-        <?php endif ?>
-    </h2>
+        <input type="hidden" name="id" value="<?= e((string) $rule['id']) ?>">
 
-    <?php if ($record->canEdit()) : ?>
-        <?= view('media-page-menu', ['clipboard_facts' => $clipboard_facts, 'record' => $record]) ?>
-    <?php endif ?>
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="enabled" name="enabled" value="1" <?= $rule['enabled'] ? 'checked' : '' ?>>
+            <label class="form-check-label" for="enabled">Regel aktiv</label>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" for="key">Key</label>
+                <input class="form-control" id="key" name="key" type="text" value="<?= e((string) $rule['key']) ?>" placeholder="MEDIA LICENCE">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label" for="position">Position</label>
+                <select class="form-select" id="position" name="position">
+                    <option value="before-title" <?= $rule['position'] === 'before-title' ? 'selected' : '' ?>>vor dem Titel</option>
+                    <option value="after-title" <?= $rule['position'] === 'after-title' ? 'selected' : '' ?>>nach dem Titel</option>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label" for="match_type">Match-Typ</label>
+                <select class="form-select" id="match_type" name="match_type">
+                    <option value="exact" <?= $rule['match_type'] === 'exact' ? 'selected' : '' ?>>exact</option>
+                    <option value="contains" <?= $rule['match_type'] === 'contains' ? 'selected' : '' ?>>contains</option>
+                    <option value="regex" <?= $rule['match_type'] === 'regex' ? 'selected' : '' ?>>regex</option>
+                </select>
+            </div>
+
+            <div class="col-md-8">
+                <label class="form-label" for="match_value">Match-Wert</label>
+                <input class="form-control" id="match_value" name="match_value" type="text" value="<?= e((string) $rule['match_value']) ?>" placeholder="CC BY 4.0">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label" for="label">Badge-Text</label>
+                <input class="form-control" id="label" name="label" type="text" value="<?= e((string) $rule['label']) ?>" placeholder="CC BY 4.0">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label" for="class">CSS-Klasse</label>
+                <input class="form-control" id="class" name="class" type="text" value="<?= e((string) $rule['class']) ?>" placeholder="mbg-badge mbg-badge--ccby">
+            </div>
+
+            <div class="col-md-8">
+                <label class="form-label" for="title">Tooltip</label>
+                <input class="form-control" id="title" name="title" type="text" value="<?= e((string) $rule['title']) ?>" placeholder="Creative Commons Attribution 4.0">
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label" for="sort_order">Reihenfolge</label>
+                <input class="form-control" id="sort_order" name="sort_order" type="number" value="<?= e((string) $rule['sort_order']) ?>">
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">Speichern</button>
+
+            <a class="btn btn-outline-secondary" href="<?= e(route('module', ['module' => $module->name(), 'action' => 'Badges'])) ?>">
+                Abbrechen
+            </a>
+        </div>
+    </form>
 </div>
-
-<div class="wt-page-content">
-    <?= view('record-page-links', [
-        'details'              => view('media-page-details', ['clipboard_facts' => $clipboard_facts, 'record' => $record]),
-        'linked_families'      => $linked_families,
-        'linked_individuals'   => $linked_individuals,
-        'linked_locations'     => $linked_locations,
-        'linked_media_objects' => null,
-        'linked_notes'         => $linked_notes,
-        'linked_repositories'  => null,
-        'linked_sources'       => $linked_sources,
-        'linked_submitters'    => null,
-        'tree'                 => $tree,
-    ]) ?>
-</div>
-
-<?= view('modals/ajax') ?>
