@@ -218,15 +218,16 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         ]));
     }
 
-    public static function noteKeys(): array
-    {
-        $value = DB::table('module_setting')
-            ->where('module_name', '=', self::MODULE_NAME)
-            ->where('setting_name', '=', self::PREF_NOTE_KEYS)
-            ->value('setting_value');
+public static function noteKeys(): array
+{
+    $value = DB::table('module_setting')
+        ->where('module_name', '=', self::MODULE_NAME)
+        ->where('setting_name', '=', self::PREF_NOTE_KEYS)
+        ->value('setting_value');
 
-        return self::normalizeNoteKeys((string) ($value ?? 'MEDIA LICENCE'));
-    }
+    return self::normalizeNoteKeys((string) ($value ?? ''));
+}
+
 
     public static function badgeRules(): array
     {
@@ -388,14 +389,15 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         };
     }
 
-    private static function normalizeNoteKeys(string $text): array
-    {
-        $keys = preg_split('/\R/u', $text) ?: [];
-        $keys = array_map(static fn (string $value): string => trim($value), $keys);
-        $keys = array_values(array_filter($keys, static fn (string $value): bool => $value !== ''));
+private static function normalizeNoteKeys(string $text): array
+{
+    $keys = preg_split('/\R/u', $text) ?: [];
+    $keys = array_map(static fn (string $value): string => trim($value), $keys);
+    $keys = array_values(array_filter($keys, static fn (string $value): bool => $value !== ''));
 
-        return $keys === [] ? ['MEDIA LICENCE'] : $keys;
-    }
+    return $keys;
+}
+
 
     private static function defaultBadgeRules(): array
     {
