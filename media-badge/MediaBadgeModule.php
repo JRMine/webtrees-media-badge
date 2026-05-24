@@ -98,14 +98,17 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         ]);
     }
 
-    public function getAdminAction(ServerRequestInterface $request): ResponseInterface
-    {
-        return $this->viewResponse($this->name() . '::admin/config', [
-            'module'         => $this,
-            'note_keys_text' => implode("\n", self::noteKeys()),
-            'title'          => I18N::translate('Media Badge settings'),
-        ]);
-    }
+public function getAdminAction(ServerRequestInterface $request): ResponseInterface
+{
+    $this->layout = 'layouts/administration';
+
+    return $this->viewResponse($this->name() . '::admin/config', [
+        'module'         => $this,
+        'note_keys_text' => implode("\n", self::noteKeys()),
+        'title'          => I18N::translate('Media Badge settings'),
+    ]);
+}
+
 
     public function postAdminAction(ServerRequestInterface $request): ResponseInterface
     {
@@ -118,27 +121,44 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         return redirect($this->getConfigLink());
     }
 
-    public function getBadgesAction(ServerRequestInterface $request): ResponseInterface
-    {
-        return $this->viewResponse($this->name() . '::admin/badges', [
-            'module' => $this,
-            'rules'  => self::badgeRules(),
-            'title'  => I18N::translate('Badge rules'),
-        ]);
+public function getBadgesAction(ServerRequestInterface $request): ResponseInterface
+{
+    $this->layout = 'layouts/administration';
+
+    return $this->viewResponse($this->name() . '::admin/badges', [
+        'module' => $this,
+        'rules'  => self::badgeRules(),
+        'title'  => I18N::translate('Badge rules'),
+    ]);
+}
+
+
+  public function getBadgeEditAction(ServerRequestInterface $request): ResponseInterface
+{
+    $this->layout = 'layouts/administration';
+
+    $query = $request->getQueryParams();
+    $id = (string) ($query['id'] ?? '');
+
+    $rule = null;
+    foreach (self::badgeRules() as $candidate) {
+        if (($candidate['id'] ?? '') === $id) {
+            $rule = $candidate;
+            break;
+        }
     }
 
-    public function getBadgeEditAction(ServerRequestInterface $request): ResponseInterface
-    {
-        $query = $request->getQueryParams();
-        $id = (string) ($query['id'] ?? '');
+    if ($rule === null) {
+        $rule = self::normalizeRule([]);
+    }
 
-        $rule = null;
-        foreach (self::badgeRules() as $candidate) {
-            if (($candidate['id'] ?? '') === $id) {
-                $rule = $candidate;
-                break;
-            }
-        }
+    return $this->viewResponse($this->name() . '::admin/badge-edit', [
+        'module' => $this,
+        'rule'   => $rule,
+        'title'  => $id === '' ? I18N::translate('Add badge rule') : I18N::translate('Edit badge rule'),
+    ]);
+}
+
 
         if ($rule === null) {
             $rule = self::normalizeRule([]);
