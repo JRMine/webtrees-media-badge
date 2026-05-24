@@ -74,21 +74,25 @@ declare(strict_types=1);
                 <td><?= e($match_display) ?></td>
                 <td><?= e((string) ($rule['render_mode'] ?? 'text')) ?></td>
                 <td>
-                    <span class="<?= e($preview_class) ?>">
-                        <?php if ($show_icon) : ?>
-                            <span class="mbg-badge__icon" aria-hidden="true">
-                                <?php if ($icon_type === 'class') : ?>
-                                    <i class="<?= e($icon_value) ?>"></i>
-                                <?php else : ?>
-                                    <?= e($icon_value) ?>
-                                <?php endif ?>
-                            </span>
-                        <?php endif ?>
+                    <?php if ($show_icon || $show_text) : ?>
+                        <span class="<?= e($preview_class) ?>">
+                            <?php if ($show_icon) : ?>
+                                <span class="mbg-badge__icon" aria-hidden="true">
+                                    <?php if ($icon_type === 'class') : ?>
+                                        <i class="<?= e($icon_value) ?>"></i>
+                                    <?php elseif ($icon_type === 'url') : ?>
+                                        <img src="<?= e($icon_value) ?>" alt="" class="mbg-badge__icon-image">
+                                    <?php else : ?>
+                                        <?= e($icon_value) ?>
+                                    <?php endif ?>
+                                </span>
+                            <?php endif ?>
 
-                        <?php if ($show_text) : ?>
-                            <span class="mbg-badge__label"><?= e($preview_label) ?></span>
-                        <?php endif ?>
-                    </span>
+                            <?php if ($show_text) : ?>
+                                <span class="mbg-badge__label"><?= e($preview_label) ?></span>
+                            <?php endif ?>
+                        </span>
+                    <?php endif ?>
                 </td>
                 <td><?= e((string) ($rule['sort_order'] ?? 0)) ?></td>
                 <td>
