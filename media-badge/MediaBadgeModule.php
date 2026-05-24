@@ -45,7 +45,7 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
     use ModuleCustomTrait;
     use ModuleGlobalTrait;
 
-    public const MODULE_NAME = 'media-badge';
+    public const MODULE_NAME = '_media-badge_';
     private const PREF_NOTE_KEYS = 'NOTE_KEYS';
     private const PREF_BADGE_RULES = 'BADGE_RULES';
 
@@ -115,16 +115,11 @@ public function postAdminAction(ServerRequestInterface $request): ResponseInterf
     $note_keys_text = (string) ($body['note_keys_text'] ?? '');
 
     $keys = self::normalizeNoteKeys($note_keys_text);
-
-    DB::table('module_setting')->updateOrInsert([
-        'module_name'  => self::MODULE_NAME,
-        'setting_name' => self::PREF_NOTE_KEYS,
-    ], [
-        'setting_value' => implode("\n", $keys),
-    ]);
+    $this->setPreference(self::PREF_NOTE_KEYS, implode("\n", $keys));
 
     return redirect($this->getConfigLink());
 }
+
 
 
     public function getBadgesAction(ServerRequestInterface $request): ResponseInterface
