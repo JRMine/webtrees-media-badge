@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -8,24 +9,41 @@ declare(strict_types=1);
  */
 ?>
 
-<h1><?= e($title) ?></h1>
+<div class="row">
+    <div class="col-lg-8">
+        <h2><?= e($title) ?></h2>
 
-<form method="post" action="<?= e(route('module', ['module' => $module->name(), 'action' => 'Admin'])) ?>">
-    <?= csrf_field() ?>
+        <p class="text-muted">
+            Hier legst du fest, nach welchen NOTE-Schlüsseln das Modul in Medien-Notizen sucht.
+            Pro Zeile ein Schlüssel.
+        </p>
 
-    <div class="mb-3">
-        <label class="form-label" for="note_keys_text">
-            <?= e(\Fisharebest\Webtrees\I18N::translate('Note keys')) ?>
-        </label>
-        <textarea
-            class="form-control"
-            id="note_keys_text"
-            name="note_keys_text"
-            rows="6"
-        ><?= e($note_keys_text) ?></textarea>
+        <form method="post" action="<?= e(route('module', ['module' => $module->name(), 'action' => 'Admin'])) ?>">
+            <?= csrf_field() ?>
+
+            <div class="mb-3">
+                <label class="form-label" for="note_keys_text">Note-Keys</label>
+                <textarea
+                    class="form-control font-monospace"
+                    id="note_keys_text"
+                    name="note_keys_text"
+                    rows="6"
+                ><?= e($note_keys_text) ?></textarea>
+                <div class="form-text">
+                    Beispiel: MEDIA LICENCE oder MEDIA RIGHTS
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    Speichern
+                </button>
+
+                <a class="btn btn-outline-secondary"
+                   href="<?= e(route('module', ['module' => $module->name(), 'action' => 'Badges'])) ?>">
+                    Badge-Regeln
+                </a>
+            </div>
+        </form>
     </div>
-
-    <button type="submit" class="btn btn-primary">
-        <?= e(\Fisharebest\Webtrees\I18N::translate('Save')) ?>
-    </button>
-</form>
+</div>
