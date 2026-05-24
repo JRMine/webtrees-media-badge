@@ -1,0 +1,151 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @var \Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule $module
+ * @var array<string,mixed> $rule
+ * @var string $title
+ */
+
+$enabled      = (bool) ($rule['enabled'] ?? true);
+$key          = (string) ($rule['key'] ?? '');
+$match_type   = (string) ($rule['match_type'] ?? '');
+$match_value  = (string) ($rule['match_value'] ?? '');
+$render_mode  = (string) ($rule['render_mode'] ?? 'text');
+$icon_type    = (string) ($rule['icon_type'] ?? 'class');
+$icon_value   = (string) ($rule['icon_value'] ?? '');
+$label_mode   = (string) ($rule['label_mode'] ?? 'value');
+$label        = (string) ($rule['label'] ?? '');
+$tooltip_mode = (string) ($rule['tooltip_mode'] ?? 'auto');
+$tooltip      = (string) ($rule['title'] ?? '');
+$class        = (string) ($rule['class'] ?? 'mbg-badge mbg-badge--generic');
+$position     = (string) ($rule['position'] ?? 'after-title');
+$sort_order   = (int) ($rule['sort_order'] ?? 0);
+$id           = (string) ($rule['id'] ?? '');
+
+?>
+
+<h2><?= e($title) ?></h2>
+
+<form method="post" action="<?= e(route('module', ['module' => $module->name(), 'action' => 'BadgeEdit'])) ?>">
+    <?= csrf_field() ?>
+    <input type="hidden" name="id" value="<?= e($id) ?>">
+
+    <div class="form-check mb-4">
+        <input class="form-check-input" type="checkbox" id="enabled" name="enabled" value="1"<?= $enabled ? ' checked' : '' ?>>
+        <label class="form-check-label" for="enabled">Regel aktiv</label>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <label class="form-label" for="key">Schlüssel</label>
+            <input class="form-control" type="text" id="key" name="key" value="<?= e($key) ?>" required>
+            <div class="form-text">Zum Beispiel: MEDIA LICENCE</div>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label" for="position">Position</label>
+            <select class="form-select" id="position" name="position">
+                <option value="before-title"<?= $position === 'before-title' ? ' selected' : '' ?>>Vor dem Titel</option>
+                <option value="after-title"<?= $position === 'after-title' ? ' selected' : '' ?>>Nach dem Titel</option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label" for="sort_order">Reihenfolge</label>
+            <input class="form-control" type="number" id="sort_order" name="sort_order" value="<?= e((string) $sort_order) ?>">
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label class="form-label" for="match_type">Wert-Regel</label>
+            <select class="form-select" id="match_type" name="match_type">
+                <option value=""<?= $match_type === '' ? ' selected' : '' ?>>Beliebiger Wert</option>
+                <option value="exact"<?= $match_type === 'exact' ? ' selected' : '' ?>>Exakt gleich</option>
+                <option value="contains"<?= $match_type === 'contains' ? ' selected' : '' ?>>Enthält</option>
+                <option value="regex"<?= $match_type === 'regex' ? ' selected' : '' ?>>Regex</option>
+            </select>
+        </div>
+
+        <div class="col-md-8">
+            <label class="form-label" for="match_value">Vergleichswert</label>
+            <input class="form-control" type="text" id="match_value" name="match_value" value="<?= e($match_value) ?>">
+            <div class="form-text">Leer lassen = Regel gilt für jeden Wert dieses Schlüssels.</div>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label class="form-label" for="render_mode">Darstellung</label>
+            <select class="form-select" id="render_mode" name="render_mode">
+                <option value="text"<?= $render_mode === 'text' ? ' selected' : '' ?>>Nur Text</option>
+                <option value="icon"<?= $render_mode === 'icon' ? ' selected' : '' ?>>Nur Icon</option>
+                <option value="icon-text"<?= $render_mode === 'icon-text' ? ' selected' : '' ?>>Icon + Text</option>
+                <option value="auto"<?= $render_mode === 'auto' ? ' selected' : '' ?>>Automatisch</option>
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label" for="icon_type">Icon-Typ</label>
+            <select class="form-select" id="icon_type" name="icon_type">
+                <option value="class"<?= $icon_type === 'class' ? ' selected' : '' ?>>CSS-Klasse</option>
+                <option value="text"<?= $icon_type === 'text' ? ' selected' : '' ?>>Text / Emoji</option>
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label" for="icon_value">Icon-Wert</label>
+            <input class="form-control" type="text" id="icon_value" name="icon_value" value="<?= e($icon_value) ?>">
+            <div class="form-text">Beispiel Klasse: bi bi-lock / Beispiel Text: 🔒</div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label class="form-label" for="label_mode">Text im Badge</label>
+            <select class="form-select" id="label_mode" name="label_mode">
+                <option value="value"<?= $label_mode === 'value' ? ' selected' : '' ?>>Wert aus der Note</option>
+                <option value="fixed"<?= $label_mode === 'fixed' ? ' selected' : '' ?>>Fester Text</option>
+                <option value="none"<?= $label_mode === 'none' ? ' selected' : '' ?>>Kein Text</option>
+            </select>
+        </div>
+
+        <div class="col-md-8">
+            <label class="form-label" for="label">Fester Text</label>
+            <input class="form-control" type="text" id="label" name="label" value="<?= e($label) ?>">
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label class="form-label" for="tooltip_mode">Tooltip</label>
+            <select class="form-select" id="tooltip_mode" name="tooltip_mode">
+                <option value="auto"<?= $tooltip_mode === 'auto' ? ' selected' : '' ?>>Automatisch</option>
+                <option value="fixed"<?= $tooltip_mode === 'fixed' ? ' selected' : '' ?>>Fester Tooltip</option>
+                <option value="none"<?= $tooltip_mode === 'none' ? ' selected' : '' ?>>Kein Tooltip</option>
+            </select>
+        </div>
+
+        <div class="col-md-8">
+            <label class="form-label" for="title">Tooltip-Text</label>
+            <input class="form-control" type="text" id="title" name="title" value="<?= e($tooltip) ?>">
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <label class="form-label" for="class">CSS-Klassen</label>
+        <input class="form-control font-monospace" type="text" id="class" name="class" value="<?= e($class) ?>">
+        <div class="form-text">Zum Beispiel: mbg-badge mbg-badge--generic</div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Speichern</button>
+        <a class="btn btn-outline-secondary" href="<?= e(route('module', ['module' => $module->name(), 'action' => 'Badges'])) ?>">
+            Abbrechen
+        </a>
+    </div>
+</form>
