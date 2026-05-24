@@ -50,6 +50,10 @@ $render_badge = static function (array $badge): string {
     $show_icon = $render_mode !== 'text' && $icon_value !== '';
     $show_text = $render_mode !== 'icon' && $label !== '';
 
+    if (!$show_icon && !$show_text) {
+        return '';
+    }
+
     $class = trim((string) ($badge['class'] ?? 'mbg-badge mbg-badge--generic'));
     if (!$show_text && $show_icon) {
         $class .= ' mbg-badge--icon-only';
@@ -62,6 +66,8 @@ $render_badge = static function (array $badge): string {
             <span class="mbg-badge__icon" aria-hidden="true">
                 <?php if ($icon_type === 'class') : ?>
                     <i class="<?= e($icon_value) ?>"></i>
+                <?php elseif ($icon_type === 'url') : ?>
+                    <img src="<?= e($icon_value) ?>" alt="" class="mbg-badge__icon-image">
                 <?php else : ?>
                     <?= e($icon_value) ?>
                 <?php endif ?>

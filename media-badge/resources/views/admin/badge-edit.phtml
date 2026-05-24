@@ -93,15 +93,23 @@ $id           = (string) ($rule['id'] ?? '');
             <label class="form-label" for="icon_type">Icon-Typ</label>
             <select class="form-select" id="icon_type" name="icon_type">
                 <option value="class"<?= $icon_type === 'class' ? ' selected' : '' ?>>CSS-Klasse</option>
-                <option value="text"<?= $icon_type === 'text' ? ' selected' : '' ?>>Text / Emoji</option>
+                <option value="text"<?= $icon_type === 'text' ? ' selected' : '' ?>>Text</option>
+                <option value="url"<?= $icon_type === 'url' ? ' selected' : '' ?>>Bild / SVG-URL</option>
             </select>
         </div>
 
         <div class="col-md-4">
             <label class="form-label" for="icon_value">Icon-Wert</label>
             <input class="form-control" type="text" id="icon_value" name="icon_value" value="<?= e($icon_value) ?>">
-            <div class="form-text">Beispiel Klasse: bi bi-lock / Beispiel Text: 🔒</div>
+            <div class="form-text">
+                Beispiele: <code>bi bi-lock-fill</code>, <code>Copyright</code> oder eine SVG-URL
+            </div>
         </div>
+    </div>
+
+    <div class="mb-4">
+        <label class="form-label" for="icon_url_example">Beispiel für SVG-URL</label>
+        <input class="form-control font-monospace" type="text" id="icon_url_example" value="https://upload.wikimedia.org/wikipedia/commons/5/52/Cc-zero.svg" readonly>
     </div>
 
     <div class="row g-3 mb-4">
@@ -139,7 +147,7 @@ $id           = (string) ($rule['id'] ?? '');
     <div class="mb-4">
         <label class="form-label" for="class">CSS-Klassen</label>
         <input class="form-control font-monospace" type="text" id="class" name="class" value="<?= e($class) ?>">
-        <div class="form-text">Zum Beispiel: mbg-badge mbg-badge--generic</div>
+        <div class="form-text">Zum Beispiel: <code>mbg-badge mbg-badge--generic</code></div>
     </div>
 
     <div class="d-flex gap-2">
