@@ -8,7 +8,7 @@ Beispiel:
 MEDIA LICENCE: CC BY 4.0
 Daraus kann auf der Medienseite automatisch ein Badge wie CC BY 4.0 erzeugt werden.
 
-Ziel des Projekts
+# Ziel des Projekts
 In vielen webtrees-Installationen werden Lizenzinformationen, Nutzungsrechte oder andere medienbezogene Hinweise bereits als Notizen gepflegt, sind aber nur in der Detailansicht sichtbar und gestalterisch wenig präsent.
 
 Dieses Modul soll solche Informationen:
@@ -20,7 +20,7 @@ und perspektivisch auch in weiteren Medienansichten nutzbar machen.
 Geplanter Funktionsumfang
 Die Entwicklung ist in mehreren Ausbaustufen gedacht.
 
-Version 1: Minimaler Startpunkt
+# Version 1: Minimaler Startpunkt
 Die erste Version konzentriert sich auf einen klaren Anwendungsfall:
 
 Auslesen von NOTE-Fakten eines Medienobjekts
@@ -47,7 +47,8 @@ Medienlisten
 Thumbnail-Ansichten
 Album-/Galerieansichten
 verknüpfte Medien in Personen-, Familien- oder Quellenansichten
-Projektstruktur
+
+# Projektstruktur
 Aktuell ist folgende Struktur vorgesehen:
 
 Copymodules_v4/media-badge/
@@ -65,14 +66,14 @@ Copymodules_v4/media-badge/
 Die Datei media-page.phtml überschreibt die Standardansicht der Medienseite und ergänzt dort die Badge-Anzeige.
 Die Admin-Views sind für die geplante Konfigurationsoberfläche vorgesehen.
 
-Beispiel für die Datennutzung
+# Beispiel für die Datennutzung
 Beispiel einer Shared Note
 CopyMEDIA LICENCE: CC BY 4.0
 Quelle: Beispielarchiv
 Erwartetes Verhalten
 Das Modul liest die Notiz aus, erkennt die Zeile mit MEDIA LICENCE: und zeigt auf der Medienseite ein Badge mit dem Text CC BY 4.0 an.
 
-Konzeptioneller Ansatz
+# Konzeptioneller Ansatz
 Das Modul verfolgt zwei getrennte Schritte:
 
 1. Extraktion
@@ -107,7 +108,7 @@ Copy[
 ]
 Dieses Modell ist noch nicht final, bildet aber die geplante Richtung gut ab.
 
-Installation
+# Installation
 Geplante Installation
 Das Modul wird wie ein übliches benutzerdefiniertes webtrees-Modul im Verzeichnis modules_v4/ abgelegt.
 
@@ -118,7 +119,7 @@ Nach dem Kopieren des Modulordners kann das Modul in webtrees im Kontrollzentrum
 
 Hinweis: Die genaue Aktivierung und eventuelle Composer-/Autoload-Anpassungen hängen von der finalen Modulstruktur ab.
 
-Aktueller Status
+# Aktueller Status
 Dieses Projekt befindet sich noch in der Entwicklung.
 
 Der aktuelle Fokus liegt auf:
@@ -129,7 +130,7 @@ einer späteren Erweiterbarkeit
 einer Admin-Oberfläche für frei definierbare Badge-Regeln
 Das Modul ist also bewusst als kleine, erweiterbare Basis gedacht und nicht als bereits vollständig abgeschlossenes Produkt.
 
-Entwicklungsziele
+# Entwicklungsziele
 Bei der Entwicklung stehen folgende Ziele im Vordergrund:
 
 möglichst geringe Eingriffe in bestehende Datenstrukturen
@@ -155,20 +156,22 @@ MEDIA QUALITY: ungeprüft
 MEDIA SOURCE: Archivkopie
 Damit wäre das Modul nicht auf Lizenzhinweise beschränkt, sondern grundsätzlich für strukturierte Medienmarkierungen nutzbar.
 
-Roadmap
-Kurzfristig
+## Roadmap
+Kurzfristig:
 Grundmodul anlegen
 Medienseite überschreiben
 MEDIA LICENCE: aus Shared Notes auslesen
 Badge neben dem Medientitel anzeigen
 einfache CSS-Styles bereitstellen
-Mittelfristig
+
+Mittelfristig:
 eigene Modulkonfiguration
 Badge-Regeln verwalten
 Regeln aktivieren/deaktivieren
 Farben und Klassen definieren
 Match-Typen konfigurieren
-Langfristig
+
+Langfristig:
 Badges in weiteren Medienansichten
 bessere Mehrfachregel-Unterstützung
 eventuell Export/Import von Regeldefinitionen
@@ -177,7 +180,7 @@ Noch festzulegen.
 
 Empfehlenswert wäre eine Lizenz, die mit dem üblichen webtrees-Modul-Ökosystem kompatibel ist, zum Beispiel GPLv3.
 
-Mitwirken
+# Mitwirken
 Ideen, Verbesserungsvorschläge und Beiträge sind willkommen.
 
 Besonders interessant sind Rückmeldungen zu:
