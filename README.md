@@ -1,59 +1,189 @@
 # Media Badge
 
-**Media Badge** ist ein benutzerdefiniertes Modul für [webtrees](https://www.webtrees.net/), das Informationen aus an Medienobjekte verknüpften Notizen ausliest und als visuelle Badges neben dem Medientitel anzeigt.
+**Media Badge** ist ein Custom-Modul für [webtrees](https://www.webtrees.net/), das Informationen aus verknüpften Medien-Notizen (`NOTE`) als visuelle Badges direkt **neben dem Medientitel** anzeigt.
 
-Der erste Anwendungsfall ist die Anzeige von Lizenzinformationen, die in einer Shared Note oder Inline-Note mit einem Präfix wie `MEDIA LICENCE:` hinterlegt sind.
+Das Modul ist dafür gedacht, wiederverwendbare Informationen aus Shared Notes — zum Beispiel Lizenzen, Rechte, Status oder andere Kennzeichnungen — sichtbar und flexibel darzustellen, ohne dass diese erst in der Detailansicht gesucht werden müssen.
+
+---
+
+## Status
+
+**Beta / Pre-Release**
+
+Das Modul ist bereits testbar und im produktiven Alltag grundsätzlich nutzbar, befindet sich aber noch in aktiver Weiterentwicklung.
+
+---
+
+## Funktionen
+
+### Medien-Badges aus NOTE-Einträgen
+
+Das Modul durchsucht die an ein Medienobjekt verknüpften Notes nach konfigurierbaren Schlüsseln, z. B.:
+
+MEDIA LICENCE: CC BY 4.0
+MEDIA RIGHTS: Public Domain
+MEDIA STATUS: geprüft
+Der Wert hinter dem Schlüssel kann als Badge direkt neben dem Medientitel angezeigt werden.
+
+Mehrere globale NOTE-Schlüssel
+In der Modul-Konfiguration können mehrere Schlüssel hinterlegt werden — jeweils einer pro Zeile.
 
 Beispiel:
-MEDIA LICENCE: CC BY 4.0
-Daraus kann auf der Medienseite automatisch ein Badge wie CC BY 4.0 erzeugt werden.
 
-# Ziel des Projekts
-In vielen webtrees-Installationen werden Lizenzinformationen, Nutzungsrechte oder andere medienbezogene Hinweise bereits als Notizen gepflegt, sind aber nur in der Detailansicht sichtbar und gestalterisch wenig präsent.
+CopyMEDIA LICENCE
+MEDIA RIGHTS
+MEDIA STATUS
+Damit kann das Modul mehrere unterschiedliche Arten von Metadaten aus Notizen auslesen.
 
-Dieses Modul soll solche Informationen:
+Konfigurierbare Badge-Regeln
+Für gefundene Werte können Regeln definiert werden, die steuern:
 
-direkt auf der Medienseite sichtbar machen,
-optisch ansprechend als Badge darstellen,
-später flexibel konfigurierbar machen,
-und perspektivisch auch in weiteren Medienansichten nutzbar machen.
-Geplanter Funktionsumfang
-Die Entwicklung ist in mehreren Ausbaustufen gedacht.
+ob eine Regel aktiv ist
+für welchen Schlüssel sie gilt
+wie Werte verglichen werden
+wie das Badge dargestellt wird
+in welcher Reihenfolge es erscheint
+ob es vor oder nach dem Titel angezeigt wird
+welcher Tooltip angezeigt wird
+Unterstützte Match-Typen
+Regeln können auf verschiedene Arten auf Werte angewendet werden:
 
-# Version 1: Minimaler Startpunkt
-Die erste Version konzentriert sich auf einen klaren Anwendungsfall:
+beliebiger Wert
+exact
+contains
+regex
+Damit können sowohl generische Regeln als auch sehr spezifische Spezialfälle definiert werden.
 
-Auslesen von NOTE-Fakten eines Medienobjekts
-Unterstützung von verknüpften Shared Notes und Inline-Notes
-Erkennung von Zeilen im Format MEDIA LICENCE: ...
-Anzeige des extrahierten Werts als Badge neben dem Medientitel auf der Medienseite
-Version 2: Konfigurierbare Badge-Regeln
-In der nächsten Ausbaustufe soll das Modul eine eigene Verwaltungsoberfläche erhalten, ähnlich dem Ansatz von Vesta bei den „Name badges“.
+Unterstützte Darstellungsmodi
+Ein Badge kann auf verschiedene Weise gerendert werden:
 
-Geplant sind unter anderem:
+text – nur Text
+icon – nur Icon
+icon-text – Icon und Text
+auto – automatische Wahl anhand der Regel
+Unterstützte Icon-Typen
+Icons können auf verschiedene Arten eingebunden werden:
 
-eigene Einstellungsseite im Modul
-Badge-Regeln hinzufügen, bearbeiten und löschen
-konfigurierbare Erkennungsschlüssel, z. B.
-MEDIA LICENCE:, MEDIA RIGHTS:, MEDIA STATUS:
-verschiedene Match-Typen, z. B.
-exakte Übereinstimmung, Teilstring oder regulärer Ausdruck
-konfigurierbare Badge-Texte, Farben und CSS-Klassen
-Reihenfolge und Position von Badges
-Mögliche spätere Erweiterungen
-Langfristig kann das Modul über die Medien-Detailseite hinaus erweitert werden, etwa für:
+class – CSS-Klasse, z. B. für Icon-Fonts
+text – einfacher Text
+url – Bild- oder SVG-URL
+Dadurch können Badges sowohl rein textbasiert als auch mit grafischen Symbolen dargestellt werden.
 
-Medienlisten
-Thumbnail-Ansichten
-Album-/Galerieansichten
-verknüpfte Medien in Personen-, Familien- oder Quellenansichten
+Badge-Text und Tooltip steuerbar
+Pro Regel kann konfiguriert werden:
 
-# Projektstruktur
-Aktuell ist folgende Struktur vorgesehen:
+Text im Badge
+Wert aus der Note verwenden
+festen Text anzeigen
+keinen Text anzeigen
+Tooltip
+automatisch aus Schlüssel + Wert erzeugen
+festen Tooltip verwenden
+keinen Tooltip anzeigen
+Priorisierte Regelauswahl
+Falls mehrere Regeln auf denselben Wert passen, wählt das Modul die passendste Regel nach Priorität:
 
+exact
+contains
+regex
+generische Schlüssel-Regel
+Fallback
+Dadurch bleibt die Ausgabe eindeutig und gut steuerbar.
+
+Beispiel
+Shared Note
+CopyMEDIA LICENCE: CC BY 4.0
+Mögliche Badge-Ausgabe
+Text-Badge: CC BY 4.0
+farbiges Badge mit Tooltip
+Icon + Text
+SVG-Icon + Text
+Installation
+Modulordner nach modules_v4/media-badge/ kopieren
+webtrees aufrufen
+Im Kontrollzentrum das Modul Media Badge aktivieren
+Konfigurationsseite öffnen
+gewünschte NOTE-Schlüssel hinterlegen
+Badge-Regeln anlegen oder vorhandene Standardregeln verwenden
+Konfiguration
+1. NOTE-Schlüssel definieren
+In der Modul-Konfiguration können die Schlüssel eingetragen werden, nach denen in Medien-Notizen gesucht werden soll.
+
+Wichtig:
+Mehrere Schlüssel sind möglich — bitte einen Schlüssel pro Zeile eintragen.
+
+Beispiel:
+
+CopyMEDIA LICENCE
+MEDIA RIGHTS
+MEDIA STATUS
+2. Badge-Regeln definieren
+In der Regelverwaltung können Regeln angelegt, bearbeitet und gelöscht werden.
+
+Typische Felder einer Regel:
+
+Schlüssel
+Match-Typ
+Vergleichswert
+Darstellung
+Icon-Typ
+Icon-Wert
+Textmodus
+Tooltip-Modus
+CSS-Klassen
+Position
+Sortierreihenfolge
+Empfohlene Verwendung
+Das Modul eignet sich besonders für:
+
+Medienlizenzen
+Nutzungsrechte
+Veröffentlichungshinweise
+Bearbeitungsstatus
+Quellenkennzeichnung
+Sichtbarkeitskennzeichen
+Qualitätskennzeichen
+Standardverhalten
+Wenn keine passende Spezialregel gefunden wird, verwendet das Modul eine generische Standardregel für den jeweiligen Schlüssel.
+So bleibt die Ausgabe auch dann sinnvoll, wenn nicht für jeden Wert eine eigene Regel definiert wurde.
+
+Hinweise zu Icons
+CSS-Klassen
+Geeignet für vorhandene Icon-Fonts oder eigene Styles.
+
+Beispiel:
+
+Copybi bi-lock-fill
+Text
+Geeignet für einfache Textwerte oder kurze Symbole.
+
+Beispiel:
+
+CopyCopyright
+URL
+Geeignet für kleine Bild- oder SVG-Dateien.
+
+Beispiel:
+
+Copyhttps://upload.wikimedia.org/wikipedia/commons/5/52/Cc-zero.svg
+Hinweise zu externen Bild-/SVG-URLs
+Externe Icon-URLs funktionieren grundsätzlich, sind aber abhängig von:
+
+Erreichbarkeit des externen Hosts
+Hotlinking-Regeln des Zielservers
+Browser-/CSP-Verhalten
+Langfristig kann es sinnvoll sein, häufig verwendete Icons direkt lokal im Modul zu verwalten.
+
+Kompatibilität / Datenbank-Hinweis
+Das Modul speichert Badge-Regeln als JSON in den webtrees-Moduleinstellungen.
+
+In Umgebungen mit älteren MySQL-/MariaDB-Kollationen kann die Speicherung bestimmter Unicode-/Emoji-Zeichen problematisch sein.
+Deshalb sind für Icons meist CSS-Klassen oder Bild-/SVG-URLs die robustere Wahl.
+
+Projektstruktur
 Copymodules_v4/media-badge/
+├── module.php
 ├── MediaBadgeModule.php
-├── metadata.json
 └── resources/
     ├── css/
     │   └── media-badge.css
@@ -63,129 +193,35 @@ Copymodules_v4/media-badge/
             ├── config.phtml
             ├── badges.phtml
             └── badge-edit.phtml
-Die Datei media-page.phtml überschreibt die Standardansicht der Medienseite und ergänzt dort die Badge-Anzeige.
-Die Admin-Views sind für die geplante Konfigurationsoberfläche vorgesehen.
+Entwicklungsschwerpunkte der aktuellen Beta
+zuverlässiges Laden des Moduls
+stabile Speicherung der NOTE-Schlüssel
+Regelverwaltung im Admin-Bereich
+flexible Badge-Darstellung
+Unterstützung von Text-, Klassen- und URL-Icons
+Vermeidung früherer HTTP-500- und Speicherprobleme
+Bekannte Einschränkungen
+externe SVG-/Bild-URLs hängen vom jeweiligen Host ab
+die Badge-Ausgabe ist aktuell auf die Medienseite fokussiert
+weitere Ansichten (z. B. Listen, Galerien, andere Record-Kontexte) sind perspektivisch erweiterbar
+Roadmap / Nächste Ideen
+Mögliche nächste Ausbaustufen:
 
-# Beispiel für die Datennutzung
-Beispiel einer Shared Note
-CopyMEDIA LICENCE: CC BY 4.0
-Quelle: Beispielarchiv
-Erwartetes Verhalten
-Das Modul liest die Notiz aus, erkennt die Zeile mit MEDIA LICENCE: und zeigt auf der Medienseite ein Badge mit dem Text CC BY 4.0 an.
-
-# Konzeptioneller Ansatz
-Das Modul verfolgt zwei getrennte Schritte:
-
-1. Extraktion
-Zuerst wird aus einer Notiz ein strukturierter Wert extrahiert, zum Beispiel:
-
-CopyMEDIA LICENCE: CC BY 4.0
-→ extrahierter Wert: CC BY 4.0
-
-2. Darstellung
-Danach wird dieser Wert gegen konfigurierbare Badge-Regeln geprüft und in ein sichtbares Badge umgewandelt, zum Beispiel:
-
-CC BY 4.0 → blaues Badge
-CC BY-SA 4.0 → violettes Badge
-Public Domain → grünes Badge
-Private / no reuse → rotes Badge
-Dadurch bleibt die Datenerfassung im GEDCOM-/Notizmodell flexibel, während die Darstellung gezielt konfiguriert werden kann.
-
-Geplantes Regelmodell
-Für konfigurierbare Badge-Regeln ist derzeit ungefähr folgendes Datenmodell vorgesehen:
-
-Copy[
-    [
-        'enabled'     => true,
-        'key'         => 'MEDIA LICENCE',
-        'match_type'  => 'exact',
-        'match_value' => 'CC BY 4.0',
-        'label'       => 'CC BY 4.0',
-        'class'       => 'mbg-badge--ccby',
-        'sort_order'  => 10,
-        'position'    => 'after-title',
-    ],
-]
-Dieses Modell ist noch nicht final, bildet aber die geplante Richtung gut ab.
-
-# Installation
-Geplante Installation
-Das Modul wird wie ein übliches benutzerdefiniertes webtrees-Modul im Verzeichnis modules_v4/ abgelegt.
-
-Beispiel:
-
-Copymodules_v4/media-badge/
-Nach dem Kopieren des Modulordners kann das Modul in webtrees im Kontrollzentrum unter den Modulen aktiviert werden.
-
-Hinweis: Die genaue Aktivierung und eventuelle Composer-/Autoload-Anpassungen hängen von der finalen Modulstruktur ab.
-
-# Aktueller Status
-Dieses Projekt befindet sich noch in der Entwicklung.
-
-Der aktuelle Fokus liegt auf:
-
-einem sauberen Minimalbeispiel
-einer klaren Projektstruktur
-einer späteren Erweiterbarkeit
-einer Admin-Oberfläche für frei definierbare Badge-Regeln
-Das Modul ist also bewusst als kleine, erweiterbare Basis gedacht und nicht als bereits vollständig abgeschlossenes Produkt.
-
-# Entwicklungsziele
-Bei der Entwicklung stehen folgende Ziele im Vordergrund:
-
-möglichst geringe Eingriffe in bestehende Datenstrukturen
-Nutzung vorhandener webtrees-Mechanismen
-saubere Trennung zwischen Datenauswertung und Darstellung
-einfache Erweiterbarkeit für weitere Medien-Metadaten
-gute Wartbarkeit auch bei späteren Feature-Erweiterungen
-Mögliche Konfigurationsoptionen
-Für die spätere Admin-Seite sind unter anderem folgende Optionen denkbar:
-
-Standard-Präfix für auszulesende Notizzeilen
-mehrere Badge-Regeln
-Groß-/Kleinschreibung ignorieren
-Standardstil für unbekannte Werte
-Badge-Position relativ zum Medientitel
-Anzeige nur auf Detailseiten oder zusätzlich in Listen
-Beispielhafte Anwendungsfälle
-Neben Lizenzen könnten später auch andere Informationen als Badge dargestellt werden, zum Beispiel:
-
-MEDIA RIGHTS: nur privat
-MEDIA STATUS: Entwurf
-MEDIA QUALITY: ungeprüft
-MEDIA SOURCE: Archivkopie
-Damit wäre das Modul nicht auf Lizenzhinweise beschränkt, sondern grundsätzlich für strukturierte Medienmarkierungen nutzbar.
-
-## Roadmap
-Kurzfristig:
-Grundmodul anlegen
-Medienseite überschreiben
-MEDIA LICENCE: aus Shared Notes auslesen
-Badge neben dem Medientitel anzeigen
-einfache CSS-Styles bereitstellen
-
-Mittelfristig:
-eigene Modulkonfiguration
-Badge-Regeln verwalten
-Regeln aktivieren/deaktivieren
-Farben und Klassen definieren
-Match-Typen konfigurieren
-
-Langfristig:
-Badges in weiteren Medienansichten
-bessere Mehrfachregel-Unterstützung
-eventuell Export/Import von Regeldefinitionen
+lokale Icons innerhalb des Moduls
+zusätzliche Badge-Ausgabe in Listenansichten
+bessere Vorschau in der Admin-Oberfläche
+Import/Export von Badge-Regeln
+feinere Validierung für URL- und Regex-Regeln
 Lizenz
 Noch festzulegen.
 
-Empfehlenswert wäre eine Lizenz, die mit dem üblichen webtrees-Modul-Ökosystem kompatibel ist, zum Beispiel GPLv3.
+Empfehlung: GPLv3, passend zum webtrees-Umfeld.
 
-# Mitwirken
-Ideen, Verbesserungsvorschläge und Beiträge sind willkommen.
+Mitwirken
+Feedback, Ideen und Tests sind willkommen – insbesondere zu:
 
-Besonders interessant sind Rückmeldungen zu:
-
-sinnvoller Struktur für Badge-Regeln
-geeigneter Admin-Oberfläche
-typischen Notizformaten in realen webtrees-Installationen
-weiteren sinnvollen Einsatzfällen neben Lizenzangaben
+sinnvollen Regeltypen
+typischen Shared-Note-Strukturen
+sinnvollen Standard-Presets
+UI/UX der Regelverwaltung
+realen Anwendungsfällen für Medienkennzeichnungen
