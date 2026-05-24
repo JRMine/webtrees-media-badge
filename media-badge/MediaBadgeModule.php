@@ -36,6 +36,8 @@ use function strtolower;
 use function trim;
 use function uniqid;
 use function usort;
+use function response;
+
 
 use const JSON_PRETTY_PRINT;
 use const JSON_UNESCAPED_UNICODE;
@@ -48,6 +50,13 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
     public const MODULE_NAME = 'media-badge';
     private const PREF_NOTE_KEYS = 'NOTE_KEYS';
     private const PREF_BADGE_RULES = 'BADGE_RULES';
+
+    /////
+    public function getAdminAction(ServerRequestInterface $request): ResponseInterface
+{
+    return response('<h1>Media Badge Admin OK</h1>');
+}
+//////
 
     public function title(): string
     {
