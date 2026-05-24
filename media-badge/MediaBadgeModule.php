@@ -311,7 +311,7 @@ public static function noteKeys(): array
         ]);
     }
 
-   public static function resolveBadgesForMedia(Media $record): array
+public static function resolveBadgesForMedia(Media $record): array
 {
     $values = self::extractTaggedValues($record);
     $rules  = self::badgeRules();
@@ -353,6 +353,86 @@ public static function noteKeys(): array
     );
 
     return $badges;
+}
+
+private static function bestRuleForValue(array $rules, array $value): ?array
+{
+    $best_rule = null;
+    $best_score = -1;
+    $best_sort_order = PHP_INT_MAX;
+
+    foreach ($rules as $rule) {
+        if (!(bool) ($rule['enabled'] ?? false)) {
+            continue;
+        }
+
+        $score = self::rulePriority($rule, $value);
+
+        if ($score < 0) {
+            continue;
+        }
+
+        $sort_order = (int) ($rule['sort_order'] ?? 0);
+
+        if ($score > $best_score || ($score === $best_score && $sort_order < $best_sort_order)) {
+            $best_rule = $rule;
+            $best_score = $score;
+            $best_sort_order = $sort_order;
+        }
+    }
+
+    return $best_rule;
+}
+
+private static function rulePriority(array $rule, array $value): int
+{
+    $rule_key  = strtolower(trim((string) ($rule['key'] ?? '')));
+    $value_key = strtolower(trim((string) ($value['key'] ?? '')));
+
+    if ($rule_key !== '' && $rule_key !== $value_key) {
+        return -1;
+    }
+
+    $match_type  = trim((string) ($rule['match_type'] ?? ''));
+    $match_value = trim((string) ($rule['match_value'] ?? ''));
+    $subject     = (string) ($value['value'] ?? '');
+
+    if ($match_value === '') {
+        return 100;
+    }
+
+    return match ($match_type) {
+        'exact'    => strtolower(trim($subject)) === strtolower(trim($match_value)) ? 400 : -1,
+        'contains' => str_contains(strtolower($subject), strtolower($match_value)) ? 300 : -1,
+        'regex'    => @preg_match('/' . $match_value . '/iu', $subject) === 1 ? 200 : -1,
+        default    => -1,
+    };
+}
+
+private static function composeBadgeLabel(array $rule, array $value): string
+{
+    $label_mode = (string) ($rule['label_mode'] ?? 'value');
+
+    return match ($label_mode) {
+        'none'  => '',
+        'fixed' => trim((string) ($rule['label'] ?? '')) !== ''
+            ? trim((string) $rule['label'])
+            : (string) ($value['value'] ?? ''),
+        default => (string) ($value['value'] ?? ''),
+    };
+}
+
+private static function composeBadgeTitle(array $rule, array $value): string
+{
+    $tooltip_mode = (string) ($rule['tooltip_mode'] ?? 'auto');
+
+    return match ($tooltip_mode) {
+        'none'  => '',
+        'fixed' => trim((string) ($rule['title'] ?? '')) !== ''
+            ? trim((string) ($rule['title']))
+            : ((string) ($value['key'] ?? '') . ': ' . (string) ($value['value'] ?? '')),
+        default => (string) ($value['key'] ?? '') . ': ' . (string) ($value['value'] ?? ''),
+    };
 }
 
 
@@ -452,9 +532,9 @@ private static function defaultBadgeRules(): array
             'key'          => $default_key,
             'match_type'   => 'exact',
             'match_value'  => 'CC BY 4.0',
-            'render_mode'  => 'icon-text',
-            'icon_type'    => 'text',
-            'icon_value'   => '©',
+            'render_mode'  => 'text',
+            'icon_type'    => 'class',
+            'icon_value'   => '',
             'label_mode'   => 'value',
             'label'        => '',
             'tooltip_mode' => 'fixed',
@@ -469,9 +549,9 @@ private static function defaultBadgeRules(): array
             'key'          => $default_key,
             'match_type'   => 'exact',
             'match_value'  => 'CC BY-SA 4.0',
-            'render_mode'  => 'icon-text',
-            'icon_type'    => 'text',
-            'icon_value'   => '⟲',
+            'render_mode'  => 'text',
+            'icon_type'    => 'class',
+            'icon_value'   => '',
             'label_mode'   => 'value',
             'label'        => '',
             'tooltip_mode' => 'fixed',
@@ -486,9 +566,9 @@ private static function defaultBadgeRules(): array
             'key'          => $default_key,
             'match_type'   => 'exact',
             'match_value'  => 'Public Domain',
-            'render_mode'  => 'icon-text',
-            'icon_type'    => 'text',
-            'icon_value'   => '🌐',
+            'render_mode'  => 'text',
+            'icon_type'    => 'class',
+            'icon_value'   => '',
             'label_mode'   => 'value',
             'label'        => '',
             'tooltip_mode' => 'fixed',
@@ -503,9 +583,9 @@ private static function defaultBadgeRules(): array
             'key'          => $default_key,
             'match_type'   => 'contains',
             'match_value'  => 'private',
-            'render_mode'  => 'icon-text',
-            'icon_type'    => 'text',
-            'icon_value'   => '🔒',
+            'render_mode'  => 'text',
+            'icon_type'    => 'class',
+            'icon_value'   => '',
             'label_mode'   => 'fixed',
             'label'        => 'Private',
             'tooltip_mode' => 'fixed',
@@ -518,7 +598,7 @@ private static function defaultBadgeRules(): array
 }
 
 
- private static function normalizeRule(array $rule): array
+private static function normalizeRule(array $rule): array
 {
     $match_type = trim((string) ($rule['match_type'] ?? ''));
     if (!\in_array($match_type, ['', 'exact', 'contains', 'regex'], true)) {
@@ -531,7 +611,7 @@ private static function defaultBadgeRules(): array
     }
 
     $icon_type = trim((string) ($rule['icon_type'] ?? 'class'));
-    if (!\in_array($icon_type, ['class', 'text'], true)) {
+    if (!\in_array($icon_type, ['class', 'text', 'url'], true)) {
         $icon_type = 'class';
     }
 
@@ -568,6 +648,7 @@ private static function defaultBadgeRules(): array
         'sort_order'   => (int) ($rule['sort_order'] ?? 0),
     ];
 }
+
 
 
     private static function bestRuleForValue(array $rules, array $value): ?array
