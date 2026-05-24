@@ -1,50 +1,31 @@
 <?php
-
 declare(strict_types=1);
 
 /**
+ * @var \Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule $module
  * @var string $note_keys_text
  * @var string $title
- * @var \Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule $module
  */
 ?>
 
 <h1><?= e($title) ?></h1>
 
-<p>
-    Hier kannst du festlegen, nach welchen Schlüsseln das Modul in verknüpften Shared Notes oder Inline-Notes sucht.
-</p>
-
-<p>
-    Ein Schlüssel pro Zeile, zum Beispiel:
-</p>
-
-<pre>MEDIA LICENCE</pre>
-
 <form method="post" action="<?= e(route('module', ['module' => $module->name(), 'action' => 'Admin'])) ?>">
     <?= csrf_field() ?>
 
-    <div class="row mb-3">
-        <label for="note_keys_text" class="col-sm-3 col-form-label">
-            Note keys
+    <div class="mb-3">
+        <label class="form-label" for="note_keys_text">
+            <?= e(\Fisharebest\Webtrees\I18N::translate('Note keys')) ?>
         </label>
-
-        <div class="col-sm-9">
-            <textarea
-                class="form-control"
-                id="note_keys_text"
-                name="note_keys_text"
-                rows="6"
-            ><?= e($note_keys_text) ?></textarea>
-        </div>
+        <textarea
+            class="form-control"
+            id="note_keys_text"
+            name="note_keys_text"
+            rows="6"
+        ><?= e($note_keys_text) ?></textarea>
     </div>
 
-    <div class="row mb-3">
-        <div class="offset-sm-3 col-sm-9">
-            <button type="submit" class="btn btn-primary">
-                <?= view('icons/save') ?>
-                <?= e('Speichern') ?>
-            </button>
-        </div>
-    </div>
+    <button type="submit" class="btn btn-primary">
+        <?= e(\Fisharebest\Webtrees\I18N::translate('Save')) ?>
+    </button>
 </form>
