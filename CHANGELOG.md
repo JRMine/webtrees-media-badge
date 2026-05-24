@@ -32,7 +32,7 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 - Einstiegspunkt für das Laden des Moduls in webtrees ergänzt
 - Grundstruktur für Admin-Seiten vorbereitet, damit erste Konfigurationsseiten testbar werden
 
-## [0.2.0-beta.2] - 2026-05-24
+## [0.3.0-beta] - 2026-05-24
 
 ### Added
 - Erweiterte Badge-Regeln mit konfigurierbaren Darstellungsmodi:
