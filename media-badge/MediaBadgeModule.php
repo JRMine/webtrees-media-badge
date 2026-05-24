@@ -1,5 +1,6 @@
 <?php
 
+
 declare(strict_types=1);
 
 namespace Vendor\Webtrees\Module\MediaBadge;
@@ -45,7 +46,7 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
     use ModuleCustomTrait;
     use ModuleGlobalTrait;
 
-    public const MODULE_NAME = 'media-badge';
+    public const MODULE_NAME = '_media-badge_';
     private const PREF_NOTE_KEYS = 'NOTE_KEYS';
     private const PREF_BADGE_RULES = 'BADGE_RULES';
 
@@ -109,16 +110,18 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         ]);
     }
 
-    public function postAdminAction(ServerRequestInterface $request): ResponseInterface
-    {
-        $body = (array) ($request->getParsedBody() ?? []);
-        $note_keys_text = (string) ($body['note_keys_text'] ?? '');
+public function postAdminAction(ServerRequestInterface $request): ResponseInterface
+{
+    $body = (array) ($request->getParsedBody() ?? []);
+    $note_keys_text = (string) ($body['note_keys_text'] ?? '');
 
-        $keys = self::normalizeNoteKeys($note_keys_text);
-        $this->setPreference(self::PREF_NOTE_KEYS, implode("\n", $keys));
+    $keys = self::normalizeNoteKeys($note_keys_text);
+    $this->setPreference(self::PREF_NOTE_KEYS, implode("\n", $keys));
 
-        return redirect($this->getConfigLink());
-    }
+    return redirect($this->getConfigLink());
+}
+
+
 
     public function getBadgesAction(ServerRequestInterface $request): ResponseInterface
     {
@@ -218,15 +221,16 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         ]));
     }
 
-    public static function noteKeys(): array
-    {
-        $value = DB::table('module_setting')
-            ->where('module_name', '=', self::MODULE_NAME)
-            ->where('setting_name', '=', self::PREF_NOTE_KEYS)
-            ->value('setting_value');
+public static function noteKeys(): array
+{
+    $value = DB::table('module_setting')
+        ->where('module_name', '=', self::MODULE_NAME)
+        ->where('setting_name', '=', self::PREF_NOTE_KEYS)
+        ->value('setting_value');
 
-        return self::normalizeNoteKeys((string) ($value ?? 'MEDIA LICENCE'));
-    }
+    return self::normalizeNoteKeys((string) ($value ?? ''));
+}
+
 
     public static function badgeRules(): array
     {
@@ -388,14 +392,15 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         };
     }
 
-    private static function normalizeNoteKeys(string $text): array
-    {
-        $keys = preg_split('/\R/u', $text) ?: [];
-        $keys = array_map(static fn (string $value): string => trim($value), $keys);
-        $keys = array_values(array_filter($keys, static fn (string $value): bool => $value !== ''));
+private static function normalizeNoteKeys(string $text): array
+{
+    $keys = preg_split('/\R/u', $text) ?: [];
+    $keys = array_map(static fn (string $value): string => trim($value), $keys);
+    $keys = array_values(array_filter($keys, static fn (string $value): bool => $value !== ''));
 
-        return $keys === [] ? ['MEDIA LICENCE'] : $keys;
-    }
+    return $keys;
+}
+
 
     private static function defaultBadgeRules(): array
     {
