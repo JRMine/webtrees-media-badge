@@ -164,45 +164,51 @@ public function postAdminAction(ServerRequestInterface $request): ResponseInterf
         ]);
     }
 
-    public function postBadgeEditAction(ServerRequestInterface $request): ResponseInterface
-    {
-        $body = (array) ($request->getParsedBody() ?? []);
+public function postBadgeEditAction(ServerRequestInterface $request): ResponseInterface
+{
+    $body = (array) ($request->getParsedBody() ?? []);
 
-        $submitted_rule = self::normalizeRule([
-            'id'          => (string) ($body['id'] ?? ''),
-            'enabled'     => ($body['enabled'] ?? '') === '1',
-            'key'         => (string) ($body['key'] ?? ''),
-            'match_type'  => (string) ($body['match_type'] ?? 'exact'),
-            'match_value' => (string) ($body['match_value'] ?? ''),
-            'label'       => (string) ($body['label'] ?? ''),
-            'class'       => (string) ($body['class'] ?? 'mbg-badge mbg-badge--generic'),
-            'position'    => (string) ($body['position'] ?? 'after-title'),
-            'sort_order'  => (int) ($body['sort_order'] ?? 0),
-            'title'       => (string) ($body['title'] ?? ''),
-        ]);
+    $submitted_rule = self::normalizeRule([
+        'id'           => (string) ($body['id'] ?? ''),
+        'enabled'      => ($body['enabled'] ?? '') === '1',
+        'key'          => (string) ($body['key'] ?? ''),
+        'match_type'   => (string) ($body['match_type'] ?? ''),
+        'match_value'  => (string) ($body['match_value'] ?? ''),
+        'render_mode'  => (string) ($body['render_mode'] ?? 'text'),
+        'icon_type'    => (string) ($body['icon_type'] ?? 'class'),
+        'icon_value'   => (string) ($body['icon_value'] ?? ''),
+        'label_mode'   => (string) ($body['label_mode'] ?? 'value'),
+        'label'        => (string) ($body['label'] ?? ''),
+        'tooltip_mode' => (string) ($body['tooltip_mode'] ?? 'auto'),
+        'title'        => (string) ($body['title'] ?? ''),
+        'class'        => (string) ($body['class'] ?? 'mbg-badge mbg-badge--generic'),
+        'position'     => (string) ($body['position'] ?? 'after-title'),
+        'sort_order'   => (int) ($body['sort_order'] ?? 0),
+    ]);
 
-        $rules = self::badgeRules();
-        $updated = false;
+    $rules = self::badgeRules();
+    $updated = false;
 
-        foreach ($rules as $index => $rule) {
-            if (($rule['id'] ?? '') === $submitted_rule['id']) {
-                $rules[$index] = $submitted_rule;
-                $updated = true;
-                break;
-            }
+    foreach ($rules as $index => $rule) {
+        if (($rule['id'] ?? '') === $submitted_rule['id']) {
+            $rules[$index] = $submitted_rule;
+            $updated = true;
+            break;
         }
-
-        if (!$updated) {
-            $rules[] = $submitted_rule;
-        }
-
-        self::saveBadgeRules($rules);
-
-        return redirect(route('module', [
-            'module' => $this->name(),
-            'action' => 'Badges',
-        ]));
     }
+
+    if (!$updated) {
+        $rules[] = $submitted_rule;
+    }
+
+    self::saveBadgeRules($rules);
+
+    return redirect(route('module', [
+        'module' => $this->name(),
+        'action' => 'Badges',
+    ]));
+}
+
 
     public function postBadgeDeleteAction(ServerRequestInterface $request): ResponseInterface
     {
@@ -245,12 +251,13 @@ public function postAdminAction(ServerRequestInterface $request): ResponseInterf
     }
 
     
-    public static function noteKeys(): array
-    {
-        $keys = self::configuredNoteKeys();
+public static function noteKeys(): array
+{
+    $keys = self::configuredNoteKeys();
 
-        return $keys !== [] ? $keys : self::defaultNoteKeys();
-    }
+    return $keys !== [] ? $keys : self::defaultNoteKeys();
+}
+
 
 
 
@@ -304,56 +311,50 @@ public function postAdminAction(ServerRequestInterface $request): ResponseInterf
         ]);
     }
 
-    public static function resolveBadgesForMedia(Media $record): array
-    {
-        $values = self::extractTaggedValues($record);
-        $rules  = self::badgeRules();
+   public static function resolveBadgesForMedia(Media $record): array
+{
+    $values = self::extractTaggedValues($record);
+    $rules  = self::badgeRules();
 
-        $badges = [];
+    $badges = [];
 
-        foreach ($values as $value) {
-            $matched = false;
+    foreach ($values as $value) {
+        $rule = self::bestRuleForValue($rules, $value);
 
-            foreach ($rules as $rule) {
-                if (!$rule['enabled']) {
-                    continue;
-                }
-
-                if (!self::ruleMatches($rule, $value)) {
-                    continue;
-                }
-
-                $matched = true;
-
-                $badges[] = [
-                    'label'      => $rule['label'] !== '' ? $rule['label'] : $value['value'],
-                    'class'      => $rule['class'] !== '' ? $rule['class'] : 'mbg-badge mbg-badge--generic',
-                    'position'   => $rule['position'],
-                    'sort_order' => $rule['sort_order'],
-                    'title'      => $rule['title'] !== ''
-                        ? $rule['title']
-                        : ($value['key'] . ': ' . $value['value']),
-                ];
-            }
-
-            if (!$matched) {
-                $badges[] = [
-                    'label'      => $value['value'],
-                    'class'      => 'mbg-badge mbg-badge--generic',
-                    'position'   => 'after-title',
-                    'sort_order' => 999,
-                    'title'      => $value['key'] . ': ' . $value['value'],
-                ];
-            }
+        if ($rule === null) {
+            $badges[] = [
+                'label'       => $value['value'],
+                'class'       => 'mbg-badge mbg-badge--generic',
+                'position'    => 'after-title',
+                'sort_order'  => 999,
+                'title'       => $value['key'] . ': ' . $value['value'],
+                'render_mode' => 'text',
+                'icon_type'   => 'class',
+                'icon_value'  => '',
+            ];
+            continue;
         }
 
-        usort(
-            $badges,
-            static fn (array $a, array $b): int => ($a['sort_order'] <=> $b['sort_order'])
-        );
-
-        return $badges;
+        $badges[] = [
+            'label'       => self::composeBadgeLabel($rule, $value),
+            'class'       => $rule['class'] !== '' ? $rule['class'] : 'mbg-badge mbg-badge--generic',
+            'position'    => $rule['position'],
+            'sort_order'  => $rule['sort_order'],
+            'title'       => self::composeBadgeTitle($rule, $value),
+            'render_mode' => $rule['render_mode'],
+            'icon_type'   => $rule['icon_type'],
+            'icon_value'  => $rule['icon_value'],
+        ];
     }
+
+    usort(
+        $badges,
+        static fn (array $a, array $b): int => ($a['sort_order'] <=> $b['sort_order'])
+    );
+
+    return $badges;
+}
+
 
     private static function extractTaggedValues(Media $record): array
     {
@@ -425,72 +426,229 @@ private static function normalizeNoteKeys(string $text): array
 
 
 private static function defaultBadgeRules(): array
-    {
-        $default_key = self::primaryNoteKey();
+{
+    $default_key = self::primaryNoteKey();
 
-        return [
-            self::normalizeRule([
-                'enabled'     => true,
-                'key'         => $default_key,
-                'match_type'  => 'exact',
-                'match_value' => 'CC BY 4.0',
-                'label'       => 'CC BY 4.0',
-                'class'       => 'mbg-badge mbg-badge--ccby',
-                'position'    => 'after-title',
-                'sort_order'  => 10,
-                'title'       => 'Creative Commons Attribution 4.0',
-            ]),
-            
-            self::normalizeRule([
-                'enabled'     => true,
-                'key'         => $default_key,
-                'match_type'  => 'exact',
-                'match_value' => 'CC BY-SA 4.0',
-                'label'       => 'CC BY-SA 4.0',
-                'class'       => 'mbg-badge mbg-badge--ccbysa',
-                'position'    => 'after-title',
-                'sort_order'  => 20,
-                'title'       => 'Creative Commons Attribution-ShareAlike 4.0',
-            ]),
-            self::normalizeRule([
-                'enabled'     => true,
-                'key'         => $default_key,
-                'match_type'  => 'exact',
-                'match_value' => 'Public Domain',
-                'label'       => 'Public Domain',
-                'class'       => 'mbg-badge mbg-badge--public-domain',
-                'position'    => 'after-title',
-                'sort_order'  => 30,
-                'title'       => 'Public Domain',
-            ]),
-            self::normalizeRule([
-                'enabled'     => true,
-                'key'         => $default_key,
-                'match_type'  => 'contains',
-                'match_value' => 'private',
-                'label'       => 'Private',
-                'class'       => 'mbg-badge mbg-badge--private',
-                'position'    => 'after-title',
-                'sort_order'  => 40,
-                'title'       => 'Private / no reuse',
-            ]),
-        ];
+    return [
+        self::normalizeRule([
+            'enabled'      => true,
+            'key'          => $default_key,
+            'match_type'   => '',
+            'match_value'  => '',
+            'render_mode'  => 'text',
+            'icon_type'    => 'class',
+            'icon_value'   => '',
+            'label_mode'   => 'value',
+            'label'        => '',
+            'tooltip_mode' => 'auto',
+            'title'        => '',
+            'class'        => 'mbg-badge mbg-badge--generic',
+            'position'     => 'after-title',
+            'sort_order'   => 100,
+        ]),
+
+        self::normalizeRule([
+            'enabled'      => true,
+            'key'          => $default_key,
+            'match_type'   => 'exact',
+            'match_value'  => 'CC BY 4.0',
+            'render_mode'  => 'icon-text',
+            'icon_type'    => 'text',
+            'icon_value'   => '©',
+            'label_mode'   => 'value',
+            'label'        => '',
+            'tooltip_mode' => 'fixed',
+            'title'        => 'Creative Commons Attribution 4.0',
+            'class'        => 'mbg-badge mbg-badge--ccby',
+            'position'     => 'after-title',
+            'sort_order'   => 10,
+        ]),
+
+        self::normalizeRule([
+            'enabled'      => true,
+            'key'          => $default_key,
+            'match_type'   => 'exact',
+            'match_value'  => 'CC BY-SA 4.0',
+            'render_mode'  => 'icon-text',
+            'icon_type'    => 'text',
+            'icon_value'   => '⟲',
+            'label_mode'   => 'value',
+            'label'        => '',
+            'tooltip_mode' => 'fixed',
+            'title'        => 'Creative Commons Attribution-ShareAlike 4.0',
+            'class'        => 'mbg-badge mbg-badge--ccbysa',
+            'position'     => 'after-title',
+            'sort_order'   => 20,
+        ]),
+
+        self::normalizeRule([
+            'enabled'      => true,
+            'key'          => $default_key,
+            'match_type'   => 'exact',
+            'match_value'  => 'Public Domain',
+            'render_mode'  => 'icon-text',
+            'icon_type'    => 'text',
+            'icon_value'   => '🌐',
+            'label_mode'   => 'value',
+            'label'        => '',
+            'tooltip_mode' => 'fixed',
+            'title'        => 'Public Domain',
+            'class'        => 'mbg-badge mbg-badge--public-domain',
+            'position'     => 'after-title',
+            'sort_order'   => 30,
+        ]),
+
+        self::normalizeRule([
+            'enabled'      => true,
+            'key'          => $default_key,
+            'match_type'   => 'contains',
+            'match_value'  => 'private',
+            'render_mode'  => 'icon-text',
+            'icon_type'    => 'text',
+            'icon_value'   => '🔒',
+            'label_mode'   => 'fixed',
+            'label'        => 'Private',
+            'tooltip_mode' => 'fixed',
+            'title'        => 'Private / no reuse',
+            'class'        => 'mbg-badge mbg-badge--private',
+            'position'     => 'after-title',
+            'sort_order'   => 40,
+        ]),
+    ];
+}
+
+
+ private static function normalizeRule(array $rule): array
+{
+    $match_type = trim((string) ($rule['match_type'] ?? ''));
+    if (!\in_array($match_type, ['', 'exact', 'contains', 'regex'], true)) {
+        $match_type = '';
     }
 
-    private static function normalizeRule(array $rule): array
-    {
-        return [
-            'id'          => trim((string) ($rule['id'] ?? uniqid('badge_', true))),
-            'enabled'     => (bool) ($rule['enabled'] ?? true),
-            'key'         => trim((string) ($rule['key'] ?? self::primaryNoteKey())),
-            'match_type'  => trim((string) ($rule['match_type'] ?? 'exact')),
-            'match_value' => trim((string) ($rule['match_value'] ?? '')),
-            'label'       => trim((string) ($rule['label'] ?? '')),
-            'class'       => trim((string) ($rule['class'] ?? 'mbg-badge mbg-badge--generic')),
-            'position'    => trim((string) ($rule['position'] ?? 'after-title')),
-            'sort_order'  => (int) ($rule['sort_order'] ?? 0),
-            'title'       => trim((string) ($rule['title'] ?? '')),
-        ];
+    $render_mode = trim((string) ($rule['render_mode'] ?? 'text'));
+    if (!\in_array($render_mode, ['text', 'icon', 'icon-text', 'auto'], true)) {
+        $render_mode = 'text';
     }
+
+    $icon_type = trim((string) ($rule['icon_type'] ?? 'class'));
+    if (!\in_array($icon_type, ['class', 'text'], true)) {
+        $icon_type = 'class';
+    }
+
+    $label_mode = trim((string) ($rule['label_mode'] ?? 'value'));
+    if (!\in_array($label_mode, ['value', 'fixed', 'none'], true)) {
+        $label_mode = 'value';
+    }
+
+    $tooltip_mode = trim((string) ($rule['tooltip_mode'] ?? 'auto'));
+    if (!\in_array($tooltip_mode, ['auto', 'fixed', 'none'], true)) {
+        $tooltip_mode = 'auto';
+    }
+
+    $position = trim((string) ($rule['position'] ?? 'after-title'));
+    if (!\in_array($position, ['before-title', 'after-title'], true)) {
+        $position = 'after-title';
+    }
+
+    return [
+        'id'           => trim((string) ($rule['id'] ?? uniqid('badge_', true))),
+        'enabled'      => (bool) ($rule['enabled'] ?? true),
+        'key'          => trim((string) ($rule['key'] ?? self::primaryNoteKey())),
+        'match_type'   => $match_type,
+        'match_value'  => trim((string) ($rule['match_value'] ?? '')),
+        'render_mode'  => $render_mode,
+        'icon_type'    => $icon_type,
+        'icon_value'   => trim((string) ($rule['icon_value'] ?? '')),
+        'label_mode'   => $label_mode,
+        'label'        => trim((string) ($rule['label'] ?? '')),
+        'tooltip_mode' => $tooltip_mode,
+        'title'        => trim((string) ($rule['title'] ?? '')),
+        'class'        => trim((string) ($rule['class'] ?? 'mbg-badge mbg-badge--generic')),
+        'position'     => $position,
+        'sort_order'   => (int) ($rule['sort_order'] ?? 0),
+    ];
+}
+
+
+    private static function bestRuleForValue(array $rules, array $value): ?array
+{
+    $best_rule = null;
+    $best_score = -1;
+    $best_sort_order = PHP_INT_MAX;
+
+    foreach ($rules as $rule) {
+        if (!(bool) ($rule['enabled'] ?? false)) {
+            continue;
+        }
+
+        $score = self::rulePriority($rule, $value);
+
+        if ($score < 0) {
+            continue;
+        }
+
+        $sort_order = (int) ($rule['sort_order'] ?? 0);
+
+        if ($score > $best_score || ($score === $best_score && $sort_order < $best_sort_order)) {
+            $best_rule = $rule;
+            $best_score = $score;
+            $best_sort_order = $sort_order;
+        }
+    }
+
+    return $best_rule;
+}
+
+private static function rulePriority(array $rule, array $value): int
+{
+    $rule_key  = strtolower(trim((string) ($rule['key'] ?? '')));
+    $value_key = strtolower(trim((string) ($value['key'] ?? '')));
+
+    if ($rule_key !== '' && $rule_key !== $value_key) {
+        return -1;
+    }
+
+    $match_type  = trim((string) ($rule['match_type'] ?? ''));
+    $match_value = trim((string) ($rule['match_value'] ?? ''));
+    $subject     = (string) ($value['value'] ?? '');
+
+    if ($match_value === '') {
+        return 100; // generische Key-Regel
+    }
+
+    return match ($match_type) {
+        'exact'    => strtolower(trim($subject)) === strtolower(trim($match_value)) ? 400 : -1,
+        'contains' => str_contains(strtolower($subject), strtolower($match_value)) ? 300 : -1,
+        'regex'    => @preg_match('/' . $match_value . '/iu', $subject) === 1 ? 200 : -1,
+        default    => -1,
+    };
+}
+
+private static function composeBadgeLabel(array $rule, array $value): string
+{
+    $label_mode = (string) ($rule['label_mode'] ?? 'value');
+
+    return match ($label_mode) {
+        'none'  => '',
+        'fixed' => trim((string) ($rule['label'] ?? '')) !== ''
+            ? trim((string) $rule['label'])
+            : (string) ($value['value'] ?? ''),
+        default => (string) ($value['value'] ?? ''),
+    };
+}
+
+private static function composeBadgeTitle(array $rule, array $value): string
+{
+    $tooltip_mode = (string) ($rule['tooltip_mode'] ?? 'auto');
+
+    return match ($tooltip_mode) {
+        'none'  => '',
+        'fixed' => trim((string) ($rule['title'] ?? '')) !== ''
+            ? trim((string) $rule['title'])
+            : ((string) ($value['key'] ?? '') . ': ' . (string) ($value['value'] ?? '')),
+        default => (string) ($value['key'] ?? '') . ': ' . (string) ($value['value'] ?? ''),
+    };
+}
+
 
 }
