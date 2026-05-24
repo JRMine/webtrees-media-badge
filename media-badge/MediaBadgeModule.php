@@ -20,9 +20,7 @@ use Psr\Http\Message\ServerRequestInterface;
 
 use function array_filter;
 use function array_map;
-use function array_merge;
 use function array_values;
-use function count;
 use function implode;
 use function is_array;
 use function is_string;
@@ -33,8 +31,8 @@ use function preg_quote;
 use function preg_split;
 use function redirect;
 use function route;
-use function strtolower;
 use function str_contains;
+use function strtolower;
 use function trim;
 use function uniqid;
 use function usort;
@@ -47,9 +45,9 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
     use ModuleCustomTrait;
     use ModuleGlobalTrait;
 
-    public const string MODULE_NAME = 'media-badge';
-    private const string PREF_NOTE_KEYS  = 'NOTE_KEYS';
-    private const string PREF_BADGE_RULES = 'BADGE_RULES';
+    public const MODULE_NAME = 'media-badge';
+    private const PREF_NOTE_KEYS = 'NOTE_KEYS';
+    private const PREF_BADGE_RULES = 'BADGE_RULES';
 
     public function title(): string
     {
@@ -68,7 +66,7 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
 
     public function customModuleVersion(): string
     {
-        return '0.2.0';
+        return '0.2.0-beta.1';
     }
 
     public function customModuleSupportUrl(): string
@@ -100,17 +98,16 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         ]);
     }
 
-public function getAdminAction(ServerRequestInterface $request): ResponseInterface
-{
-    $this->layout = 'layouts/administration';
+    public function getAdminAction(ServerRequestInterface $request): ResponseInterface
+    {
+        $this->layout = 'layouts/administration';
 
-    return $this->viewResponse($this->name() . '::admin/config', [
-        'module'         => $this,
-        'note_keys_text' => implode("\n", self::noteKeys()),
-        'title'          => I18N::translate('Media Badge settings'),
-    ]);
-}
-
+        return $this->viewResponse($this->name() . '::admin/config', [
+            'module'         => $this,
+            'note_keys_text' => implode("\n", self::noteKeys()),
+            'title'          => I18N::translate('Media Badge settings'),
+        ]);
+    }
 
     public function postAdminAction(ServerRequestInterface $request): ResponseInterface
     {
@@ -123,44 +120,32 @@ public function getAdminAction(ServerRequestInterface $request): ResponseInterfa
         return redirect($this->getConfigLink());
     }
 
-public function getBadgesAction(ServerRequestInterface $request): ResponseInterface
-{
-    $this->layout = 'layouts/administration';
+    public function getBadgesAction(ServerRequestInterface $request): ResponseInterface
+    {
+        $this->layout = 'layouts/administration';
 
-    return $this->viewResponse($this->name() . '::admin/badges', [
-        'module' => $this,
-        'rules'  => self::badgeRules(),
-        'title'  => I18N::translate('Badge rules'),
-    ]);
-}
+        return $this->viewResponse($this->name() . '::admin/badges', [
+            'module' => $this,
+            'rules'  => self::badgeRules(),
+            'title'  => I18N::translate('Badge rules'),
+        ]);
+    }
 
+    public function getBadgeEditAction(ServerRequestInterface $request): ResponseInterface
+    {
+        $this->layout = 'layouts/administration';
 
-  public function getBadgeEditAction(ServerRequestInterface $request): ResponseInterface
-{
-    $this->layout = 'layouts/administration';
+        $query = $request->getQueryParams();
+        $id = (string) ($query['id'] ?? '');
 
-    $query = $request->getQueryParams();
-    $id = (string) ($query['id'] ?? '');
+        $rule = null;
 
-    $rule = null;
-    foreach (self::badgeRules() as $candidate) {
-        if (($candidate['id'] ?? '') === $id) {
-            $rule = $candidate;
-            break;
+        foreach (self::badgeRules() as $candidate) {
+            if (($candidate['id'] ?? '') === $id) {
+                $rule = $candidate;
+                break;
+            }
         }
-    }
-
-    if ($rule === null) {
-        $rule = self::normalizeRule([]);
-    }
-
-    return $this->viewResponse($this->name() . '::admin/badge-edit', [
-        'module' => $this,
-        'rule'   => $rule,
-        'title'  => $id === '' ? I18N::translate('Add badge rule') : I18N::translate('Edit badge rule'),
-    ]);
-}
-
 
         if ($rule === null) {
             $rule = self::normalizeRule([]);
@@ -169,7 +154,9 @@ public function getBadgesAction(ServerRequestInterface $request): ResponseInterf
         return $this->viewResponse($this->name() . '::admin/badge-edit', [
             'module' => $this,
             'rule'   => $rule,
-            'title'  => $id === '' ? I18N::translate('Add badge rule') : I18N::translate('Edit badge rule'),
+            'title'  => $id === ''
+                ? I18N::translate('Add badge rule')
+                : I18N::translate('Edit badge rule'),
         ]);
     }
 
@@ -253,6 +240,7 @@ public function getBadgesAction(ServerRequestInterface $request): ResponseInterf
         }
 
         $decoded = json_decode($value, true);
+
         if (!is_array($decoded)) {
             return self::defaultBadgeRules();
         }
@@ -262,7 +250,10 @@ public function getBadgesAction(ServerRequestInterface $request): ResponseInterf
             array_filter($decoded, static fn ($rule): bool => is_array($rule))
         );
 
-        usort($rules, static fn (array $a, array $b): int => ($a['sort_order'] <=> $b['sort_order']));
+        usort(
+            $rules,
+            static fn (array $a, array $b): int => ($a['sort_order'] <=> $b['sort_order'])
+        );
 
         return $rules;
     }
@@ -274,7 +265,10 @@ public function getBadgesAction(ServerRequestInterface $request): ResponseInterf
             $rules
         );
 
-        usort($normalized, static fn (array $a, array $b): int => ($a['sort_order'] <=> $b['sort_order']));
+        usort(
+            $normalized,
+            static fn (array $a, array $b): int => ($a['sort_order'] <=> $b['sort_order'])
+        );
 
         DB::table('module_setting')->updateOrInsert([
             'module_name'  => self::MODULE_NAME,
@@ -304,12 +298,15 @@ public function getBadgesAction(ServerRequestInterface $request): ResponseInterf
                 }
 
                 $matched = true;
+
                 $badges[] = [
                     'label'      => $rule['label'] !== '' ? $rule['label'] : $value['value'],
                     'class'      => $rule['class'] !== '' ? $rule['class'] : 'mbg-badge mbg-badge--generic',
                     'position'   => $rule['position'],
                     'sort_order' => $rule['sort_order'],
-                    'title'      => $rule['title'] !== '' ? $rule['title'] : ($value['key'] . ': ' . $value['value']),
+                    'title'      => $rule['title'] !== ''
+                        ? $rule['title']
+                        : ($value['key'] . ': ' . $value['value']),
                 ];
             }
 
@@ -324,7 +321,10 @@ public function getBadgesAction(ServerRequestInterface $request): ResponseInterf
             }
         }
 
-        usort($badges, static fn (array $a, array $b): int => ($a['sort_order'] <=> $b['sort_order']));
+        usort(
+            $badges,
+            static fn (array $a, array $b): int => ($a['sort_order'] <=> $b['sort_order'])
+        );
 
         return $badges;
     }
