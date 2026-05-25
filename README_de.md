@@ -1,7 +1,5 @@
 # Media Badge
 
-## Deutsch
-
 **Media Badge** ist ein Custom-Modul für webtrees, das Informationen aus verknüpften Medien-Notizen (`NOTE`) als visuelle Badges direkt neben dem Medientitel anzeigt.
 
 Das Modul ist dafür gedacht, wiederverwendbare Informationen aus Shared Notes — zum Beispiel Lizenzen, Rechte, Status oder andere Kennzeichnungen — sichtbar und flexibel darzustellen, ohne dass diese erst in der Detailansicht gesucht werden müssen.
