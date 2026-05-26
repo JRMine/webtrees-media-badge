@@ -1,0 +1,54 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @var array<string,mixed> $badge
+ */
+
+$render_mode = (string) ($badge['render_mode'] ?? 'text');
+$icon_type   = (string) ($badge['icon_type'] ?? 'class');
+$icon_value  = trim((string) ($badge['icon_value'] ?? ''));
+$label       = trim((string) ($badge['label'] ?? ''));
+$title       = trim((string) ($badge['title'] ?? ''));
+$class       = trim((string) ($badge['class'] ?? 'mbg-badge mbg-badge--generic'));
+
+if ($render_mode === 'auto') {
+    if ($icon_value !== '' && $label !== '') {
+        $render_mode = 'icon-text';
+    } elseif ($icon_value !== '') {
+        $render_mode = 'icon';
+    } else {
+        $render_mode = 'text';
+    }
+}
+
+$show_icon = $render_mode !== 'text' && $icon_value !== '';
+$show_text = $render_mode !== 'icon' && $label !== '';
+
+if (!$show_icon && !$show_text) {
+    return;
+}
+
+if ($show_icon && !$show_text) {
+    $class .= ' mbg-badge--icon-only';
+}
+?>
+
+<span class="<?= e($class) ?>"<?php if ($title !== '') : ?> title="<?= e($title) ?>"<?php endif ?>>
+    <?php if ($show_icon) : ?>
+        <span class="mbg-badge__icon" aria-hidden="true">
+            <?php if ($icon_type === 'class') : ?>
+                <i class="<?= e($icon_value) ?>"></i>
+            <?php elseif ($icon_type === 'url') : ?>
+                <img src="<?= e($icon_value) ?>" alt="" class="mbg-badge__icon-image">
+            <?php else : ?>
+                <?= e($icon_value) ?>
+            <?php endif ?>
+        </span>
+    <?php endif ?>
+
+    <?php if ($show_text) : ?>
+        <span class="mbg-badge__label"><?= e($label) ?></span>
+    <?php endif ?>
+</span>

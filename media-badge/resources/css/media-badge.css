@@ -1,117 +1,45 @@
 .mbg-badge {
-    display: inline-block;
-    margin-inline-start: 0.5rem;
-    padding: 0.2rem 0.55rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.18rem 0.55rem;
     border-radius: 999px;
     font-size: 0.72em;
     font-weight: 600;
-    line-height: 1.2;
+    line-height: 1.1;
     vertical-align: middle;
     white-space: nowrap;
 }
 
-.mbg-badge--generic {
-    background: #f3f4f6;
-    color: #374151;
-}
-
-.mbg-badge--ccby {
-    background: #dbeafe;
-    color: #1d4ed8;
-}
-
-.mbg-badge--ccbysa {
-    background: #ede9fe;
-    color: #6d28d9;
-}
-
-.mbg-badge--public-domain {
-    background: #dcfce7;
-    color: #166534;
-}
-
-.mbg-badge--private {
-    background: #fee2e2;
-    color: #b91c1c;
-}
-
-.mbg-admin-page {
-    max-width: 980px;
-}
-
-.mbg-admin-help {
-    color: #6b7280;
-    max-width: 70ch;
-}
-
-.mbg-admin-page code {
-    font-size: 0.95em;
-}
-
-.mbg-badge {
+.mbg-badge-list {
     display: inline-flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.35rem;
-    padding: 0.18rem 0.55rem;
-    border-radius: 999px;
-    font-size: 0.72em;
-    font-weight: 600;
-    line-height: 1.1;
     vertical-align: middle;
 }
 
-.mbg-badge__icon {
+.mbg-media-title-line {
     display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 1em;
-}
-
-.mbg-badge__label {
-    display: inline-block;
-}
-
-.mbg-badge--icon-only {
-    padding-inline: 0.45rem;
-    min-width: 2rem;
-    justify-content: center;
-}
-
-.mbg-badge--generic {
-    background: #f3f4f6;
-    color: #374151;
-}
-
-.mbg-badge--ccby {
-    background: #dbeafe;
-    color: #1d4ed8;
-}
-
-.mbg-badge--ccbysa {
-    background: #ede9fe;
-    color: #6d28d9;
-}
-
-.mbg-badge--public-domain {
-    background: #dcfce7;
-    color: #166534;
-}
-
-.mbg-badge--private {
-    background: #fee2e2;
-    color: #b91c1c;
-}
-
-.mbg-badge {
-    display: inline-flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.35rem;
-    padding: 0.18rem 0.55rem;
-    border-radius: 999px;
-    font-size: 0.72em;
-    font-weight: 600;
-    line-height: 1.1;
     vertical-align: middle;
+}
+
+.mbg-media-title-line--center {
+    justify-content: center;
+}
+
+.mbg-media-card-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.mbg-media-card-title .card-title {
+    margin: 0;
 }
 
 .mbg-badge__icon {
@@ -163,3 +91,23 @@
     color: #b91c1c;
 }
 
+.wt-table-media .mbg-badge {
+    font-size: 0.68em;
+}
+
+.wt-album-tab-caption .mbg-badge-list {
+    justify-content: center;
+}
+
+.mbg-admin-page {
+    max-width: 980px;
+}
+
+.mbg-admin-help {
+    color: #6b7280;
+    max-width: 70ch;
+}
+
+.mbg-admin-page code {
+    font-size: 0.95em;
+}

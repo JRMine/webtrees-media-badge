@@ -79,10 +79,19 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
     }
 
     public function boot(): void
-    {
-        View::registerNamespace($this->name(), $this->resourcesFolder() . 'views/');
-        View::registerCustomView('::media-page', $this->name() . '::media-page');
-    }
+{
+    View::registerNamespace($this->name(), $this->resourcesFolder() . 'views/');
+
+    View::registerCustomView('::media-page', $this->name() . '::media-page');
+    View::registerCustomView('::lists/media-table', $this->name() . '::lists/media-table');
+    View::registerCustomView('::modules/media-list/page', $this->name() . '::modules/media-list/page');
+    View::registerCustomView('::modules/lightbox/tab', $this->name() . '::modules/lightbox/tab');
+    View::registerCustomView('::modules/media/tab', $this->name() . '::modules/media/tab');
+    View::registerCustomView('::modules/random_media/slide-show', $this->name() . '::modules/random_media/slide-show');
+
+
+}
+
 
     public function headContent(): string
     {
