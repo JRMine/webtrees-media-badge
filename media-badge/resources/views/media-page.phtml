@@ -24,79 +24,25 @@ use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
  * @var Tree                       $tree
  */
 
-$badges = MediaBadgeModule::resolveBadgesForMedia($record);
-
-$before_badges = array_values(array_filter(
-    $badges,
-    static fn (array $badge): bool => ($badge['position'] ?? 'after-title') === 'before-title'
-));
-
-$after_badges = array_values(array_filter(
-    $badges,
-    static fn (array $badge): bool => ($badge['position'] ?? 'after-title') !== 'before-title'
-));
-
-$render_badge = static function (array $badge): string {
-    $render_mode = (string) ($badge['render_mode'] ?? 'text');
-    $icon_type   = (string) ($badge['icon_type'] ?? 'class');
-    $icon_value  = (string) ($badge['icon_value'] ?? '');
-    $label       = (string) ($badge['label'] ?? '');
-    $title       = (string) ($badge['title'] ?? '');
-
-    if ($render_mode === 'auto') {
-        $render_mode = $icon_value !== '' ? 'icon-text' : 'text';
-    }
-
-    $show_icon = $render_mode !== 'text' && $icon_value !== '';
-    $show_text = $render_mode !== 'icon' && $label !== '';
-
-    if (!$show_icon && !$show_text) {
-        return '';
-    }
-
-    $class = trim((string) ($badge['class'] ?? 'mbg-badge mbg-badge--generic'));
-    if (!$show_text && $show_icon) {
-        $class .= ' mbg-badge--icon-only';
-    }
-
-    ob_start();
-    ?>
-    <span class="<?= e($class) ?>"<?php if ($title !== '') : ?> title="<?= e($title) ?>"<?php endif ?>>
-        <?php if ($show_icon) : ?>
-            <span class="mbg-badge__icon" aria-hidden="true">
-                <?php if ($icon_type === 'class') : ?>
-                    <i class="<?= e($icon_value) ?>"></i>
-                <?php elseif ($icon_type === 'url') : ?>
-                    <img src="<?= e($icon_value) ?>" alt="" class="mbg-badge__icon-image">
-                <?php else : ?>
-                    <?= e($icon_value) ?>
-                <?php endif ?>
-            </span>
-        <?php endif ?>
-
-        <?php if ($show_text) : ?>
-            <span class="mbg-badge__label"><?= e($label) ?></span>
-        <?php endif ?>
-    </span>
-    <?php
-    return (string) ob_get_clean();
-};
-
 ?>
 
 <?= view('media-page-pending', ['record' => $record]) ?>
 
 <div class="d-flex mb-4">
-    <h2 class="wt-page-title mx-auto d-flex flex-wrap align-items-center justify-content-center gap-2">
-        <?php foreach ($before_badges as $badge) : ?>
-            <?= $render_badge($badge) ?>
-        <?php endforeach ?>
+    <h2 class="wt-page-title mx-auto">
+        <span class="mbg-media-title-line mbg-media-title-line--center">
+            <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
+                'record'   => $record,
+                'position' => 'before-title',
+            ]) ?>
 
-        <span><?= $record->fullName() ?></span>
+            <span><?= $record->fullName() ?></span>
 
-        <?php foreach ($after_badges as $badge) : ?>
-            <?= $render_badge($badge) ?>
-        <?php endforeach ?>
+            <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
+                'record'   => $record,
+                'position' => 'after-title',
+            ]) ?>
+        </span>
     </h2>
 
     <?php if ($record->canEdit()) : ?>
