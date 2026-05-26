@@ -1,30 +1,38 @@
 # Media Badge
 
-**Media Badge** is a custom module for webtrees that displays information from linked media notes (`NOTE`) as visual badges directly next to the media title.
+**Media Badge** is a custom module for [webtrees](https://github.com/fisharebest/webtrees) that displays information from linked media notes (`NOTE`) as visual badges next to media titles.
 
-The module is designed to make reusable information from Shared Notes — such as licences, rights, status markers, or other labels — visible and flexible, without requiring users to open the detail view to find them.
+The module is designed to make reusable information from Shared Notes — such as licences, rights, status markers, or other labels — visible directly where media objects are shown.
+
+Instead of hiding that information inside media detail pages, Media Badge brings it into lists, tabs, album views, and other media-related contexts.
 
 ## Status
 
-Beta / Pre-release
+**Beta / Pre-release**
 
-The module is already testable and generally usable in everyday production workflows, but it is still under active development.
+The module is already usable and testable in real-world setups, but it is still under active development on the road to version 1.0.
+
+Current release target:
+
+- `0.4.0-beta`
 
 ## Features
 
-### Media badges from NOTE entries
+### Badge output from media notes
 
-The module scans notes linked to a media object for configurable keys, for example:
+The module reads configured keys from media-related `NOTE` content.
+
+Example:
 
     MEDIA LICENCE: CC BY 4.0
     MEDIA RIGHTS: Public Domain
     MEDIA STATUS: verified
 
-The value after the key can be displayed as a badge directly next to the media title.
+The value after the key can be rendered as a badge next to the media title.
 
 ### Multiple global NOTE keys
 
-Multiple keys can be defined in the module configuration — one key per line.
+You can define multiple keys in the module configuration, one per line.
 
 Example:
 
@@ -32,83 +40,79 @@ Example:
     MEDIA RIGHTS
     MEDIA STATUS
 
-This allows the module to read different kinds of metadata from notes.
+This allows the module to extract different kinds of reusable metadata from Shared Notes.
 
 ### Configurable badge rules
 
-Rules can be defined for detected values to control:
+Badge rules control how matching values are rendered.
 
-- whether a rule is active
-- which key it applies to
+Rules can define:
+
+- whether the rule is enabled
+- which key the rule applies to
 - how values are matched
 - how the badge is rendered
-- in which order it appears
-- whether it is shown before or after the title
-- which tooltip is displayed
-- which CSS classes are used
+- whether the badge appears before or after the title
+- sort order
+- tooltip behavior
+- CSS classes
+- icon behavior
+- fixed labels or value-based labels
 
 ### Supported match types
 
-Rules can be applied to values in different ways:
+Rules currently support:
 
 - any value
 - `exact`
 - `contains`
 - `regex`
 
-This makes it possible to define both generic rules and very specific special cases.
+This allows both generic key-based rules and highly specific value-based rules.
 
 ### Supported render modes
 
-A badge can be rendered in different ways:
+Badges can be rendered as:
 
-- `text` — text only
-- `icon` — icon only
-- `icon-text` — icon and text
-- `auto` — automatic choice based on the rule
+- `text`
+- `icon`
+- `icon-text`
+- `auto`
 
 ### Supported icon types
 
-Icons can be provided in different ways:
+Icons can be provided as:
 
-- `class` — CSS class, for example for icon fonts
-- `text` — plain text
-- `url` — image or SVG URL
+- `class` — CSS class names, for example icon-font classes
+- `text` — simple text-based icons
+- `url` — image or SVG URLs
 
-This allows badges to be displayed either as plain text or with graphical symbols.
+### Reusable badge rendering
 
-### Configurable badge text and tooltip
+Badge rendering has been centralized so the same output logic can be reused across multiple views and media contexts.
 
-Each rule can define:
+This reduces duplication and makes future expansion easier.
 
-- badge text:
-  - use the value from the note
-  - show fixed text
-  - show no text
-- tooltip:
-  - generate automatically from key and value
-  - use a fixed tooltip
-  - show no tooltip
+## Supported output contexts
 
-### Prioritized rule selection
+As of `0.4.0-beta`, Media Badge can render badges in these contexts:
 
-If multiple rules match the same value, the module selects the most appropriate rule by priority:
+- media detail page
+- media list page
+- linked media tables on record-related pages
+- standard multimedia tab
+- album view in the standard theme
+- random media slideshow / homepage slideshow
 
-1. `exact`
-2. `contains`
-3. `regex`
-4. generic key rule
-5. fallback
-
-This keeps the output predictable and easy to control.
+This means badges are no longer limited to the media detail page.
 
 ## Example
 
-### Example Shared Note
+### Shared Note
 
     MEDIA LICENCE: CC BY 4.0
 
-### Possible badge output
+### Possible output
 
 - text badge: `CC BY 4.0`
 - colored badge with tooltip
@@ -117,20 +121,23 @@ This keeps the output predictable and easy to control.
 
 ## Installation
 
-1. Copy the module folder to `modules_v4/media-badge/`
-2. Open webtrees
-3. Activate the **Media Badge** module in the control panel
-4. Open the configuration page
-5. Add the desired NOTE keys
-6. Create badge rules or use the default rules
+1. Copy the module folder to:
+
+       modules_v4/media-badge/
+
+2. Open webtrees.
+3. Enable the module in the control panel.
+4. Open the module configuration page.
+5. Enter one or more global NOTE keys.
+6. Create badge rules or use the default rules.
 
 ## Configuration
 
-### Define NOTE keys
+### Global NOTE keys
 
-In the module configuration, you can define the keys that should be searched for in media notes.
+The module configuration allows you to define one or more keys that should be searched in media notes.
 
-Important: Multiple keys are supported — enter one key per line.
+Enter one key per line.
 
 Example:
 
@@ -138,9 +145,9 @@ Example:
     MEDIA RIGHTS
     MEDIA STATUS
 
-### Define badge rules
+### Badge rules
 
-In the rule management page, rules can be created, edited, and deleted.
+Badge rules can be created, edited, and deleted in the rule management area.
 
 Typical rule fields include:
 
@@ -152,49 +159,48 @@ Typical rule fields include:
 - icon value
 - label mode
 - tooltip mode
-- CSS classes
+- CSS class
 - position
 - sort order
 
-Further details are documented in the files under `docs/`.
+## Default behavior
+
+If no specific rule matches a value, the module can still fall back to a generic rule for the corresponding key.
+
+This helps keep output consistent even when not every possible value has a dedicated rule.
 
 ## Recommended use cases
 
-The module is especially useful for:
+Media Badge is especially useful for:
 
 - media licences
 - usage rights
-- publication notices
+- publication status
 - editorial status
-- source labels
+- internal workflow labels
+- source indicators
 - visibility markers
 - quality markers
 
-## Default behavior
-
-If no specific rule matches, the module uses a generic default rule for the corresponding key.
-
-This ensures meaningful output even if not every possible value has its own dedicated rule.
-
 ## Notes on icons
 
-### CSS classes
+### CSS class icons
 
-Suitable for existing icon fonts or custom styles.
+Suitable for icon fonts or existing project styles.
 
 Example:
 
     bi bi-lock-fill
 
-### Text
+### Text icons
 
-Suitable for simple text values or short symbols.
+Suitable for simple short values.
 
 Example:
 
     Copyright
 
-### URL
+### URL icons
 
 Suitable for small image or SVG files.
 
@@ -204,19 +210,38 @@ Example:
 
 ## Notes on external image and SVG URLs
 
-External icon URLs generally work, but they depend on:
+External image or SVG URLs generally work, but depend on:
 
-- availability of the external host
-- hotlinking rules of the target server
-- browser or CSP behavior
+- external host availability
+- hotlinking restrictions
+- browser behavior
+- content security policy settings
 
-In the long term, it may be preferable to manage frequently used icons locally inside the module.
+For frequently used icons, local asset management may become preferable in future versions.
 
-## Compatibility and database note
+## Compatibility
 
-The module stores badge rules as JSON in the webtrees module settings.
+The module is currently best tested with the **standard webtrees theme**.
 
-In environments with older MySQL or MariaDB collations, storing certain Unicode or emoji characters may cause problems. For that reason, CSS classes or image and SVG URLs are usually the more robust choice for icons.
+Important note:
+
+- theme-specific conflicts may occur if another theme overrides the same core media-related views
+- album rendering in the standard theme is supported
+- theme-specific compatibility work may still be needed for themes with their own custom media templates
+
+## Database and storage note
+
+Badge rules are stored as JSON in the webtrees module settings.
+
+In environments with older MySQL or MariaDB collations, certain Unicode or emoji characters may cause problems. For that reason, CSS classes or image / SVG URLs are usually the safer icon choice.
+
+## Documentation
+
+Additional documentation is available in:
+
+- `docs/configuration.md`
+- `docs/rule-model.md`
+- `docs/architecture.md`
 
 ## Project structure
 
@@ -227,56 +252,78 @@ In environments with older MySQL or MariaDB collations, storing certain Unicode 
         ├── css/
         │   └── media-badge.css
         └── views/
-            ├── media-page.phtml
-            └── admin/
-                ├── config.phtml
-                ├── badges.phtml
-                └── badge-edit.phtml
+            ├── components/
+            │   ├── media-badge.phtml
+            │   └── media-badge-list.phtml
+            ├── lists/
+            │   └── media-table.phtml
+            ├── modules/
+            │   ├── lightbox/
+            │   │   └── tab.phtml
+            │   ├── media/
+            │   │   └── tab.phtml
+            │   ├── media-list/
+            │   │   └── page.phtml
+            │   └── random_media/
+            │       └── slide-show.phtml
+            ├── admin/
+            │   ├── config.phtml
+            │   ├── badges.phtml
+            │   └── badge-edit.phtml
+            └── media-page.phtml
 
-## Focus areas of the current beta
+## Current beta focus
+
+The current beta focuses on:
 
 - reliable module loading
-- stable storage of NOTE keys
-- admin rule management
-- flexible badge rendering
-- support for text, class, and URL icons
-- prevention of earlier HTTP 500 and storage issues
+- stable NOTE key persistence
+- reusable badge rendering
+- support for multiple media-related page contexts
+- flexible badge output with text, icons, and URLs
+- reduction of duplicated rendering logic
+- preparing a solid foundation for future visibility and permission rules
 
 ## Known limitations
 
-- external SVG or image URLs depend on the respective host
-- badge output is currently focused on the media page
-- additional views such as lists, galleries, or other record contexts can be added later
+- theme-specific conflicts may still occur when other themes override the same core media templates
+- media-related search integration is not included because core search does not currently expose a standard media result view
+- page-context visibility control is not yet implemented
+- user-group / access-level based badge visibility is not yet implemented
 
-## Roadmap / Next ideas
+## Roadmap
 
-Possible next steps include:
+Possible next development steps include:
 
-- local icons inside the module
-- additional badge output in list views
-- better preview in the admin interface
-- import and export of badge rules
+- badge visibility by user group / access level
+- page-context-specific badge visibility
+- local icon asset support
+- improved admin previews
+- import / export of badge rules
 - stricter validation for URL and regex rules
-- configurable visibility per page, key, or user group
+- additional theme compatibility work
 
 ## License
 
 To be decided.
 
-Recommended: GPLv3, to match the webtrees ecosystem.
+Recommended:
+
+- GPLv3, to fit the webtrees ecosystem
 
 ## Contributing
 
-Feedback, ideas, and testing are welcome — especially regarding:
+Feedback, ideas, and testing are welcome, especially regarding:
 
 - useful rule types
-- typical Shared Note structures
-- sensible default presets
-- UI/UX of the rule editor
-- real-world use cases for media labels
+- real-world Shared Note structures
+- default rule presets
+- UI and UX of the rule editor
+- media-related contexts that should support badges
+- future visibility and permission handling
 
-## Additional documentation
+## Release notes
 
-- `docs/configuration.md`
-- `docs/rule-model.md`
-- `docs/architecture.md`
+For the latest changes, see:
+
+- `CHANGELOG.md`
