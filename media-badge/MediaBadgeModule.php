@@ -87,6 +87,8 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
     View::registerCustomView('::modules/media-list/page', $this->name() . '::modules/media-list/page');
     View::registerCustomView('::modules/lightbox/tab', $this->name() . '::modules/lightbox/tab');
     View::registerCustomView('::modules/media/tab', $this->name() . '::modules/media/tab');
+    View::registerCustomView('::modules/random_media/slide-show', $this->name() . '::modules/random_media/slide-show');
+
 
 }
 
