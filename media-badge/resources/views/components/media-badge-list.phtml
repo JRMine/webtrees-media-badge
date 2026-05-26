@@ -1,0 +1,29 @@
+<?php
+
+declare(strict_types=1);
+
+use Fisharebest\Webtrees\Media;
+use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
+
+/**
+ * @var Media  $record
+ * @var string $position
+ */
+
+$position = $position ?? 'after-title';
+
+$badges = array_values(array_filter(
+    MediaBadgeModule::resolveBadgesForMedia($record),
+    static fn (array $badge): bool => ($badge['position'] ?? 'after-title') === $position
+));
+
+if ($badges === []) {
+    return;
+}
+?>
+
+<span class="mbg-badge-list mbg-badge-list--<?= e($position) ?>">
+    <?php foreach ($badges as $badge) : ?>
+        <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge', ['badge' => $badge]) ?>
+    <?php endforeach ?>
+</span>
