@@ -121,9 +121,13 @@ Damit sind Badges nicht mehr nur auf die Medien-Detailseite beschränkt.
 
 ## Installation
 
-1. Den Modulordner nach folgendem Pfad kopieren:
+1. Den Modulordner an einen der folgenden Pfade kopieren:
 
        modules_v4/media-badge/
+       modules_v4/webtrees-media-badge/
+
+   Die zweite Variante ist praktisch, wenn das Repository-Archiv direkt von
+   GitHub installiert wird.
 
 2. webtrees öffnen.
 3. Das Modul im Kontrollzentrum aktivieren.
