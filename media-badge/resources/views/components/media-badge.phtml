@@ -2,53 +2,76 @@
 
 declare(strict_types=1);
 
+use Fisharebest\Webtrees\Fact;
+use Fisharebest\Webtrees\Family;
+use Fisharebest\Webtrees\Individual;
+use Fisharebest\Webtrees\Location;
+use Fisharebest\Webtrees\Media;
+use Fisharebest\Webtrees\Note;
+use Fisharebest\Webtrees\Source;
+use Fisharebest\Webtrees\Tree;
+use Illuminate\Support\Collection;
+use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
+
 /**
- * @var array<string,mixed> $badge
+ * Media detail page with badge support.
+ *
+ * This view renders badges around the media title and now passes the explicit
+ * page context "media-page" into the shared badge list component.
+ *
+ * @var Collection<int,Fact>       $clipboard_facts
+ * @var Collection<int,Family>     $linked_families
+ * @var Collection<int,Individual> $linked_individuals
+ * @var Collection<int,Location>   $linked_locations
+ * @var Collection<int,Note>       $linked_notes
+ * @var Collection<int,Source>     $linked_sources
+ * @var Media                      $record
+ * @var Tree                       $tree
  */
 
-$render_mode = (string) ($badge['render_mode'] ?? 'text');
-$icon_type   = (string) ($badge['icon_type'] ?? 'class');
-$icon_value  = trim((string) ($badge['icon_value'] ?? ''));
-$label       = trim((string) ($badge['label'] ?? ''));
-$title       = trim((string) ($badge['title'] ?? ''));
-$class       = trim((string) ($badge['class'] ?? 'mbg-badge mbg-badge--generic'));
-
-if ($render_mode === 'auto') {
-    if ($icon_value !== '' && $label !== '') {
-        $render_mode = 'icon-text';
-    } elseif ($icon_value !== '') {
-        $render_mode = 'icon';
-    } else {
-        $render_mode = 'text';
-    }
-}
-
-$show_icon = $render_mode !== 'text' && $icon_value !== '';
-$show_text = $render_mode !== 'icon' && $label !== '';
-
-if (!$show_icon && !$show_text) {
-    return;
-}
-
-if ($show_icon && !$show_text) {
-    $class .= ' mbg-badge--icon-only';
-}
 ?>
+<?= view('media-page-pending', ['record' => $record]) ?>
 
-<span class="<?= e($class) ?>"<?php if ($title !== '') : ?> title="<?= e($title) ?>"<?php endif ?>>
-    <?php if ($show_icon) : ?>
-        <span class="mbg-badge__icon" aria-hidden="true">
-            <?php if ($icon_type === 'class') : ?>
-                <i class="<?= e($icon_value) ?>"></i>
-            <?php elseif ($icon_type === 'url') : ?>
-                <img src="<?= e($icon_value) ?>" alt="" class="mbg-badge__icon-image">
-            <?php else : ?>
-                <?= e($icon_value) ?>
-            <?php endif ?>
+<div class="d-flex mb-4">
+    <h2 class="wt-page-title mx-auto">
+        <span class="mbg-media-title-line mbg-media-title-line--center">
+            <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
+                'record'       => $record,
+                'position'     => 'before-title',
+                'page_context' => 'media-page',
+            ]) ?>
+
+            <span><?= $record->fullName() ?></span>
+
+            <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
+                'record'       => $record,
+                'position'     => 'after-title',
+                'page_context' => 'media-page',
+            ]) ?>
         </span>
-    <?php endif ?>
+    </h2>
 
-    <?php if ($show_text) : ?>
-        <span class="mbg-badge__label"><?= e($label) ?></span>
+    <?php if ($record->canEdit()) : ?>
+        <?= view('media-page-menu', ['clipboard_facts' => $clipboard_facts, 'record' => $record]) ?>
     <?php endif ?>
-</span>
+</div>
+
+<div class="wt-page-content">
+    <?= view('record-page-links', [
+        'details'              => view('media-page-details', [
+            'clipboard_facts' => $clipboard_facts,
+            'record'          => $record,
+        ]),
+        'linked_families'      => $linked_families,
+        'linked_individuals'   => $linked_individuals,
+        'linked_locations'     => $linked_locations,
+        'linked_media_objects' => null,
+        'linked_notes'         => $linked_notes,
+        'linked_repositories'  => null,
+        'linked_sources'       => $linked_sources,
+        'linked_submitters'    => null,
+        'tree'                 => $tree,
+    ]) ?>
+</div>
+
+<?= view('modals/ajax') ?>
