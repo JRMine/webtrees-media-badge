@@ -12,13 +12,18 @@ use Illuminate\Support\Collection;
 use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
 
 /**
+ * Linked media table with badge support.
+ *
+ * This view is used for linked media tables on record-related pages.
+ * It now passes the explicit page context "linked-media-table"
+ * into the shared badge list component.
+ *
  * @var string|null           $caption
  * @var Collection<int,Media> $media_objects
  * @var Tree                  $tree
  */
 
 ?>
-
 <?php
 $count_individuals = DB::table('individuals')
     ->join('link', static function (JoinClause $join): void {
@@ -97,8 +102,9 @@ $count_sources = DB::table('sources')
                 <td data-sort="<?= e($media_object->sortName()) ?>">
                     <div class="mbg-media-title-line">
                         <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
-                            'record'   => $media_object,
-                            'position' => 'before-title',
+                            'record'       => $media_object,
+                            'position'     => 'before-title',
+                            'page_context' => 'linked-media-table',
                         ]) ?>
 
                         <a href="<?= e($media_object->url()) ?>">
@@ -106,8 +112,9 @@ $count_sources = DB::table('sources')
                         </a>
 
                         <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
-                            'record'   => $media_object,
-                            'position' => 'after-title',
+                            'record'       => $media_object,
+                            'position'     => 'after-title',
+                            'page_context' => 'linked-media-table',
                         ]) ?>
                     </div>
                 </td>
