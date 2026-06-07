@@ -2,13 +2,32 @@
 
 declare(strict_types=1);
 
+use function array_values;
+use function implode;
+use function is_array;
+
 /**
+ * Admin overview for badge rules.
+ *
+ * This version shows the configured page contexts for each rule so admins can
+ * see where a rule is active at a glance.
+ *
  * @var \Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule $module
  * @var array<int,array<string,mixed>> $rules
  * @var string $title
  */
-?>
 
+$page_context_labels = [
+    'all'                     => 'Alle Seiten',
+    'media-page'              => 'Medien-Detailseite',
+    'media-list'              => 'Medienliste',
+    'linked-media-table'      => 'Verknüpfte Medien auf Datensatzseiten',
+    'album-tab'               => 'Album / Galerie / Thumbnail-Ansicht',
+    'media-tab'               => 'Multimedia-Tab',
+    'random-media-slide-show' => 'Zufallsmedien / Slideshow',
+];
+
+?>
 <h2><?= e($title) ?></h2>
 
 <div class="d-flex gap-2 mb-4">
@@ -27,6 +46,7 @@ declare(strict_types=1);
             <th>Aktiv</th>
             <th>Schlüssel</th>
             <th>Match</th>
+            <th>Sichtbar auf</th>
             <th>Darstellung</th>
             <th>Vorschau</th>
             <th>Sort.</th>
@@ -41,6 +61,7 @@ declare(strict_types=1);
             $icon_value  = (string) ($rule['icon_value'] ?? '');
             $label_mode  = (string) ($rule['label_mode'] ?? 'value');
             $label       = (string) ($rule['label'] ?? '');
+
             $preview_label = match ($label_mode) {
                 'none'  => '',
                 'fixed' => $label !== '' ? $label : 'Beispielwert',
@@ -67,11 +88,20 @@ declare(strict_types=1);
             if (!$show_text && $show_icon) {
                 $preview_class .= ' mbg-badge--icon-only';
             }
+
+            $page_contexts = $rule['page_contexts'] ?? ['all'];
+            $page_contexts = is_array($page_contexts) ? array_values($page_contexts) : ['all'];
+
+            $page_context_display = [];
+            foreach ($page_contexts as $context) {
+                $page_context_display[] = $page_context_labels[$context] ?? (string) $context;
+            }
             ?>
             <tr>
                 <td><?= !empty($rule['enabled']) ? 'Ja' : 'Nein' ?></td>
                 <td><code><?= e((string) ($rule['key'] ?? '')) ?></code></td>
                 <td><?= e($match_display) ?></td>
+                <td><?= e(implode(', ', $page_context_display)) ?></td>
                 <td><?= e((string) ($rule['render_mode'] ?? 'text')) ?></td>
                 <td>
                     <?php if ($show_icon || $show_text) : ?>
@@ -97,8 +127,10 @@ declare(strict_types=1);
                 <td><?= e((string) ($rule['sort_order'] ?? 0)) ?></td>
                 <td>
                     <div class="d-flex gap-2">
-                        <a class="btn btn-sm btn-outline-primary"
-                           href="<?= e(route('module', ['module' => $module->name(), 'action' => 'BadgeEdit', 'id' => (string) ($rule['id'] ?? '')])) ?>">
+                        <a
+                            class="btn btn-sm btn-outline-primary"
+                            href="<?= e(route('module', ['module' => $module->name(), 'action' => 'BadgeEdit', 'id' => (string) ($rule['id'] ?? '')])) ?>"
+                        >
                             Bearbeiten
                         </a>
 
