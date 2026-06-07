@@ -7,6 +7,12 @@ use Illuminate\Support\Collection;
 use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
 
 /**
+ * Album / lightbox tab with badge support.
+ *
+ * This view renders media thumbnails and captions in the album context and
+ * passes the explicit page context "album-tab" into the shared badge list
+ * component.
+ *
  * @var Collection<int,Media> $media_list
  */
 
@@ -21,8 +27,9 @@ use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
             <figcaption class="figure-caption wt-album-tab-caption">
                 <span class="mbg-media-title-line mbg-media-title-line--center">
                     <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
-                        'record'   => $media,
-                        'position' => 'before-title',
+                        'record'       => $media,
+                        'position'     => 'before-title',
+                        'page_context' => 'album-tab',
                     ]) ?>
 
                     <a href="<?= e($media->url()) ?>">
@@ -30,8 +37,9 @@ use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
                     </a>
 
                     <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
-                        'record'   => $media,
-                        'position' => 'after-title',
+                        'record'       => $media,
+                        'position'     => 'after-title',
+                        'page_context' => 'album-tab',
                     ]) ?>
                 </span>
             </figcaption>
