@@ -2,7 +2,17 @@
 
 declare(strict_types=1);
 
+use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
+
+use function array_values;
+use function in_array;
+use function is_array;
+
 /**
+ * Admin form for editing a single badge rule.
+ *
+ * This version adds page-context visibility configuration via page_contexts[].
+ *
  * @var \Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule $module
  * @var array<string,mixed> $rule
  * @var string $title
@@ -24,8 +34,27 @@ $position     = (string) ($rule['position'] ?? 'after-title');
 $sort_order   = (int) ($rule['sort_order'] ?? 0);
 $id           = (string) ($rule['id'] ?? '');
 
-?>
+/**
+ * page_contexts is always expected as an array after normalization,
+ * but we still guard against invalid input for safety.
+ */
+$page_contexts = $rule['page_contexts'] ?? ['all'];
+$page_contexts = is_array($page_contexts) ? array_values($page_contexts) : ['all'];
 
+/**
+ * Human-readable labels for the configured page contexts.
+ */
+$page_context_labels = [
+    'all'                     => 'Alle Seiten',
+    'media-page'              => 'Medien-Detailseite',
+    'media-list'              => 'Medienliste',
+    'linked-media-table'      => 'Verknüpfte Medien auf Datensatzseiten',
+    'album-tab'               => 'Album / Galerie / Thumbnail-Ansicht',
+    'media-tab'               => 'Multimedia-Tab',
+    'random-media-slide-show' => 'Zufallsmedien / Slideshow',
+];
+
+?>
 <h2><?= e($title) ?></h2>
 
 <form method="post" action="<?= e(route('module', ['module' => $module->name(), 'action' => 'BadgeEdit'])) ?>">
@@ -73,6 +102,34 @@ $id           = (string) ($rule['id'] ?? '');
             <label class="form-label" for="match_value">Vergleichswert</label>
             <input class="form-control" type="text" id="match_value" name="match_value" value="<?= e($match_value) ?>">
             <div class="form-text">Leer lassen = Regel gilt für jeden Wert dieses Schlüssels.</div>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <label class="form-label d-block">Sichtbar auf</label>
+
+        <div class="row g-2">
+            <?php foreach (MediaBadgeModule::availablePageContexts() as $context) : ?>
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="page_context_<?= e($context) ?>"
+                            name="page_contexts[]"
+                            value="<?= e($context) ?>"
+                            <?= in_array($context, $page_contexts, true) ? ' checked' : '' ?>
+                        >
+                        <label class="form-check-label" for="page_context_<?= e($context) ?>">
+                            <?= e($page_context_labels[$context] ?? $context) ?>
+                        </label>
+                    </div>
+                </div>
+            <?php endforeach ?>
+        </div>
+
+        <div class="form-text">
+            Wenn <code>all</code> ausgewählt ist, gilt die Regel auf allen unterstützten Seitenkontexten.
         </div>
     </div>
 
