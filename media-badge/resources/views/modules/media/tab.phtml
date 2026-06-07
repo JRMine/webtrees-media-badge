@@ -10,10 +10,15 @@ use Illuminate\Support\Collection;
 use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
 
 /**
- * @var bool                 $can_edit
- * @var Collection<int,Fact> $clipboard_facts
- * @var Collection<int,Fact> $facts
- * @var Individual           $individual
+ * Standard multimedia tab with badge support.
+ *
+ * This view renders linked media objects inside the multimedia tab and passes
+ * the explicit page context "media-tab" into the shared badge list component.
+ *
+ * @var bool                  $can_edit
+ * @var Collection<int,Fact>  $clipboard_facts
+ * @var Collection<int,Fact>  $facts
+ * @var Individual            $individual
  */
 
 ?>
@@ -59,8 +64,9 @@ use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
 
                         <div class="mbg-media-title-line mb-2">
                             <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
-                                'record'   => $media,
-                                'position' => 'before-title',
+                                'record'       => $media,
+                                'position'     => 'before-title',
+                                'page_context' => 'media-tab',
                             ]) ?>
 
                             <a href="<?= e($media->url()) ?>">
@@ -68,8 +74,9 @@ use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
                             </a>
 
                             <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
-                                'record'   => $media,
-                                'position' => 'after-title',
+                                'record'       => $media,
+                                'position'     => 'after-title',
+                                'page_context' => 'media-tab',
                             ]) ?>
                         </div>
 
