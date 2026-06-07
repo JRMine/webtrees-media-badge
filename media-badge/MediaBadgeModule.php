@@ -20,8 +20,10 @@ use Psr\Http\Message\ServerRequestInterface;
 
 use function array_filter;
 use function array_map;
+use function array_unique;
 use function array_values;
 use function implode;
+use function in_array;
 use function is_array;
 use function is_string;
 use function json_decode;
@@ -38,15 +40,47 @@ use function uniqid;
 use function usort;
 
 use const JSON_PRETTY_PRINT;
+use const PHP_INT_MAX;
 
+/**
+ * Zentrale Modulklasse für Media Badge.
+ *
+ * Verantwortlichkeiten:
+ * - Modul-Views registrieren
+ * - globale NOTE_KEYS laden
+ * - Badge-Regeln laden / normalisieren / speichern
+ * - NOTE-Werte aus Medien extrahieren
+ * - passende Regel für einen Wert bestimmen
+ * - Seitenkontext-Sichtbarkeit prüfen
+ * - finale Badge-Daten für die Views aufbereiten
+ */
 class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, ModuleGlobalInterface, ModuleConfigInterface
 {
     use ModuleCustomTrait;
     use ModuleGlobalTrait;
 
     public const MODULE_NAME = '_media-badge_';
-    private const PREF_NOTE_KEYS = 'NOTE_KEYS';
+
+    private const PREF_NOTE_KEYS   = 'NOTE_KEYS';
     private const PREF_BADGE_RULES = 'BADGE_RULES';
+
+    /**
+     * Unterstützte Seitenkontexte für die Sichtbarkeitsprüfung.
+     *
+     * Diese Werte sollen zentral definiert bleiben, damit:
+     * - Konfiguration
+     * - Regelmodell
+     * - Runtime-Logik
+     * - Views
+     * konsistent dieselben Bezeichner verwenden.
+     */
+    private const PAGE_CONTEXT_ALL                     = 'all';
+    private const PAGE_CONTEXT_MEDIA_PAGE              = 'media-page';
+    private const PAGE_CONTEXT_MEDIA_LIST              = 'media-list';
+    private const PAGE_CONTEXT_LINKED_MEDIA_TABLE      = 'linked-media-table';
+    private const PAGE_CONTEXT_ALBUM_TAB               = 'album-tab';
+    private const PAGE_CONTEXT_MEDIA_TAB               = 'media-tab';
+    private const PAGE_CONTEXT_RANDOM_MEDIA_SLIDE_SHOW = 'random-media-slide-show';
 
     public function title(): string
     {
@@ -78,20 +112,21 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         return __DIR__ . '/resources/';
     }
 
+    /**
+     * Registriert alle Modul-Views und die Core-Overrides,
+     * über die Badge-Ausgabe in verschiedenen Seitenkontexten eingebunden wird.
+     */
     public function boot(): void
-{
-    View::registerNamespace($this->name(), $this->resourcesFolder() . 'views/');
+    {
+        View::registerNamespace($this->name(), $this->resourcesFolder() . 'views/');
 
-    View::registerCustomView('::media-page', $this->name() . '::media-page');
-    View::registerCustomView('::lists/media-table', $this->name() . '::lists/media-table');
-    View::registerCustomView('::modules/media-list/page', $this->name() . '::modules/media-list/page');
-    View::registerCustomView('::modules/lightbox/tab', $this->name() . '::modules/lightbox/tab');
-    View::registerCustomView('::modules/media/tab', $this->name() . '::modules/media/tab');
-    View::registerCustomView('::modules/random_media/slide-show', $this->name() . '::modules/random_media/slide-show');
-
-
-}
-
+        View::registerCustomView('::media-page', $this->name() . '::media-page');
+        View::registerCustomView('::lists/media-table', $this->name() . '::lists/media-table');
+        View::registerCustomView('::modules/media-list/page', $this->name() . '::modules/media-list/page');
+        View::registerCustomView('::modules/lightbox/tab', $this->name() . '::modules/lightbox/tab');
+        View::registerCustomView('::modules/media/tab', $this->name() . '::modules/media/tab');
+        View::registerCustomView('::modules/random_media/slide-show', $this->name() . '::modules/random_media/slide-show');
+    }
 
     public function headContent(): string
     {
@@ -106,6 +141,9 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         ]);
     }
 
+    /**
+     * Admin-Seite: globale NOTE_KEYS konfigurieren.
+     */
     public function getAdminAction(ServerRequestInterface $request): ResponseInterface
     {
         $this->layout = 'layouts/administration';
@@ -120,6 +158,9 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         ]);
     }
 
+    /**
+     * Speichert die globalen NOTE_KEYS.
+     */
     public function postAdminAction(ServerRequestInterface $request): ResponseInterface
     {
         $body           = (array) ($request->getParsedBody() ?? []);
@@ -131,6 +172,9 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         return redirect($this->getConfigLink());
     }
 
+    /**
+     * Admin-Seite: Übersicht aller Badge-Regeln.
+     */
     public function getBadgesAction(ServerRequestInterface $request): ResponseInterface
     {
         $this->layout = 'layouts/administration';
@@ -142,6 +186,9 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         ]);
     }
 
+    /**
+     * Admin-Seite: einzelne Badge-Regel laden oder neue Regel vorbereiten.
+     */
     public function getBadgeEditAction(ServerRequestInterface $request): ResponseInterface
     {
         $this->layout = 'layouts/administration';
@@ -171,26 +218,34 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         ]);
     }
 
+    /**
+     * Speichert eine einzelne Badge-Regel.
+     *
+     * Wichtig:
+     * page_contexts wird bereits hier entgegengenommen, auch wenn
+     * die Admin-UI dafür ggf. erst im nächsten Schritt ergänzt wird.
+     */
     public function postBadgeEditAction(ServerRequestInterface $request): ResponseInterface
     {
         $body = (array) ($request->getParsedBody() ?? []);
 
         $submitted_rule = self::normalizeRule([
-            'id'           => (string) ($body['id'] ?? ''),
-            'enabled'      => ($body['enabled'] ?? '') === '1',
-            'key'          => (string) ($body['key'] ?? ''),
-            'match_type'   => (string) ($body['match_type'] ?? ''),
-            'match_value'  => (string) ($body['match_value'] ?? ''),
-            'render_mode'  => (string) ($body['render_mode'] ?? 'text'),
-            'icon_type'    => (string) ($body['icon_type'] ?? 'class'),
-            'icon_value'   => (string) ($body['icon_value'] ?? ''),
-            'label_mode'   => (string) ($body['label_mode'] ?? 'value'),
-            'label'        => (string) ($body['label'] ?? ''),
-            'tooltip_mode' => (string) ($body['tooltip_mode'] ?? 'auto'),
-            'title'        => (string) ($body['title'] ?? ''),
-            'class'        => (string) ($body['class'] ?? 'mbg-badge mbg-badge--generic'),
-            'position'     => (string) ($body['position'] ?? 'after-title'),
-            'sort_order'   => (int) ($body['sort_order'] ?? 0),
+            'id'            => (string) ($body['id'] ?? ''),
+            'enabled'       => ($body['enabled'] ?? '') === '1',
+            'key'           => (string) ($body['key'] ?? ''),
+            'match_type'    => (string) ($body['match_type'] ?? ''),
+            'match_value'   => (string) ($body['match_value'] ?? ''),
+            'render_mode'   => (string) ($body['render_mode'] ?? 'text'),
+            'icon_type'     => (string) ($body['icon_type'] ?? 'class'),
+            'icon_value'    => (string) ($body['icon_value'] ?? ''),
+            'label_mode'    => (string) ($body['label_mode'] ?? 'value'),
+            'label'         => (string) ($body['label'] ?? ''),
+            'tooltip_mode'  => (string) ($body['tooltip_mode'] ?? 'auto'),
+            'title'         => (string) ($body['title'] ?? ''),
+            'class'         => (string) ($body['class'] ?? 'mbg-badge mbg-badge--generic'),
+            'position'      => (string) ($body['position'] ?? 'after-title'),
+            'sort_order'    => (int) ($body['sort_order'] ?? 0),
+            'page_contexts' => $body['page_contexts'] ?? [],
         ]);
 
         $rules   = self::badgeRules();
@@ -216,6 +271,9 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         ]));
     }
 
+    /**
+     * Löscht eine Badge-Regel.
+     */
     public function postBadgeDeleteAction(ServerRequestInterface $request): ResponseInterface
     {
         $body = (array) ($request->getParsedBody() ?? []);
@@ -234,11 +292,17 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         ]));
     }
 
+    /**
+     * Standard-NOTE-Key, falls noch nichts konfiguriert wurde.
+     */
     private static function defaultNoteKeys(): array
     {
         return ['MEDIA LICENCE'];
     }
 
+    /**
+     * Lädt gespeicherte NOTE_KEYS aus der Datenbank.
+     */
     private static function configuredNoteKeys(): array
     {
         $value = DB::table('module_setting')
@@ -249,6 +313,10 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         return self::normalizeNoteKeys((string) ($value ?? ''));
     }
 
+    /**
+     * Liefert den primären NOTE-Key.
+     * Wird u. a. für Default-Regeln verwendet.
+     */
     private static function primaryNoteKey(): string
     {
         $keys = self::noteKeys();
@@ -256,6 +324,9 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         return $keys[0] ?? self::defaultNoteKeys()[0];
     }
 
+    /**
+     * Liefert die aktuell aktiven NOTE_KEYS.
+     */
     public static function noteKeys(): array
     {
         $keys = self::configuredNoteKeys();
@@ -263,6 +334,25 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         return $keys !== [] ? $keys : self::defaultNoteKeys();
     }
 
+    /**
+     * Liefert die zentral unterstützten Seitenkontexte.
+     */
+    public static function availablePageContexts(): array
+    {
+        return [
+            self::PAGE_CONTEXT_ALL,
+            self::PAGE_CONTEXT_MEDIA_PAGE,
+            self::PAGE_CONTEXT_MEDIA_LIST,
+            self::PAGE_CONTEXT_LINKED_MEDIA_TABLE,
+            self::PAGE_CONTEXT_ALBUM_TAB,
+            self::PAGE_CONTEXT_MEDIA_TAB,
+            self::PAGE_CONTEXT_RANDOM_MEDIA_SLIDE_SHOW,
+        ];
+    }
+
+    /**
+     * Lädt Badge-Regeln aus der Datenbank und normalisiert sie.
+     */
     public static function badgeRules(): array
     {
         $value = DB::table('module_setting')
@@ -293,6 +383,9 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         return $rules;
     }
 
+    /**
+     * Speichert Badge-Regeln normalisiert als JSON.
+     */
     public static function saveBadgeRules(array $rules): void
     {
         $normalized = array_map(
@@ -309,13 +402,22 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
             'module_name'  => self::MODULE_NAME,
             'setting_name' => self::PREF_BADGE_RULES,
         ], [
-            // absichtlich ohne JSON_UNESCAPED_UNICODE:
-            // dadurch werden problematische Zeichen escaped gespeichert
+            // Absichtlich ohne JSON_UNESCAPED_UNICODE:
+            // problematische Zeichen werden so escaped gespeichert.
             'setting_value' => json_encode($normalized, JSON_PRETTY_PRINT),
         ]);
     }
 
-    public static function resolveBadgesForMedia(Media $record): array
+    /**
+     * Zentrale Badge-Auflösung für ein Medienobjekt.
+     *
+     * Der zusätzliche Parameter $page_context erlaubt künftig eine
+     * kontextabhängige Sichtbarkeitsprüfung pro Regel.
+     *
+     * Standardmäßig wird "media-page" angenommen, damit bestehende
+     * Aufrufe rückwärtskompatibel bleiben.
+     */
+    public static function resolveBadgesForMedia(Media $record, string $page_context = self::PAGE_CONTEXT_MEDIA_PAGE): array
     {
         $values = self::extractTaggedValues($record);
         $rules  = self::badgeRules();
@@ -323,9 +425,16 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         $badges = [];
 
         foreach ($values as $value) {
-            $rule = self::bestRuleForValue($rules, $value);
+            $rule = self::bestRuleForValue($rules, $value, $page_context);
 
+            // Wenn gar keine sichtbare Regel für diesen Key existiert,
+            // soll in diesem Kontext überhaupt nichts ausgegeben werden.
             if ($rule === null) {
+                if (!self::hasVisibleRuleForKey($rules, (string) ($value['key'] ?? ''), $page_context)) {
+                    continue;
+                }
+
+                // Sichtbarer Fallback: nur wenn der Key im Kontext grundsätzlich erlaubt ist.
                 $badges[] = [
                     'label'       => $value['value'],
                     'class'       => 'mbg-badge mbg-badge--generic',
@@ -336,6 +445,7 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
                     'icon_type'   => 'class',
                     'icon_value'  => '',
                 ];
+
                 continue;
             }
 
@@ -359,6 +469,43 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         return $badges;
     }
 
+    /**
+     * Prüft, ob es für einen Key grundsätzlich mindestens eine
+     * in diesem Seitenkontext sichtbare Regel gibt.
+     *
+     * Das ist wichtig, damit ein Fallback-Badge nicht in verbotenen
+     * Kontexten "durchrutscht".
+     */
+    private static function hasVisibleRuleForKey(array $rules, string $key, string $page_context): bool
+    {
+        foreach ($rules as $rule) {
+            if (!(bool) ($rule['enabled'] ?? false)) {
+                continue;
+            }
+
+            $rule_key = strtolower(trim((string) ($rule['key'] ?? '')));
+
+            if ($rule_key !== '' && $rule_key !== strtolower(trim($key))) {
+                continue;
+            }
+
+            if (!self::ruleVisibleInPageContext($rule, $page_context)) {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Extrahiert konfigurierte Key:Value-Zeilen aus NOTE-Facts eines Mediums.
+     *
+     * Unterstützt:
+     * - direkt eingetragene NOTE-Inhalte
+     * - verlinkte Shared Notes
+     */
     private static function extractTaggedValues(Media $record): array
     {
         $keys    = self::noteKeys();
@@ -394,6 +541,9 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         return $results;
     }
 
+    /**
+     * Normalisiert die globale NOTE_KEY-Konfiguration.
+     */
     private static function normalizeNoteKeys(string $text): array
     {
         $keys = preg_split('/\R/u', $text) ?: [];
@@ -403,6 +553,13 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         return $keys;
     }
 
+    /**
+     * Eingebaute Standardregeln.
+     *
+     * page_contexts wird hier absichtlich nicht explizit gesetzt,
+     * weil normalizeRule() fehlende Werte automatisch als ["all"]
+     * behandelt.
+     */
     private static function defaultBadgeRules(): array
     {
         $default_key = self::primaryNoteKey();
@@ -495,58 +652,122 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         ];
     }
 
+    /**
+     * Normalisiert page_contexts auf eine stabile Array-Struktur.
+     *
+     * Regeln:
+     * - fehlend / leer => ["all"]
+     * - String => Array mit einem Wert
+     * - ungültige Werte werden verworfen
+     * - wenn "all" vorkommt, wird nur ["all"] gespeichert
+     */
+    private static function normalizePageContexts($page_contexts): array
+    {
+        if (is_string($page_contexts)) {
+            $page_contexts = [$page_contexts];
+        }
+
+        if (!is_array($page_contexts)) {
+            return [self::PAGE_CONTEXT_ALL];
+        }
+
+        $normalized = [];
+
+        foreach ($page_contexts as $page_context) {
+            if (!is_string($page_context)) {
+                continue;
+            }
+
+            $page_context = trim($page_context);
+
+            if ($page_context === '') {
+                continue;
+            }
+
+            if (!in_array($page_context, self::availablePageContexts(), true)) {
+                continue;
+            }
+
+            $normalized[] = $page_context;
+        }
+
+        $normalized = array_values(array_filter(array_unique($normalized), static fn (string $value): bool => $value !== ''));
+
+        if ($normalized === [] || in_array(self::PAGE_CONTEXT_ALL, $normalized, true)) {
+            return [self::PAGE_CONTEXT_ALL];
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Normalisiert eine einzelne Badge-Regel.
+     *
+     * Hier wird das gespeicherte Konfigurationsarray in eine saubere,
+     * konsistente Runtime-Struktur überführt.
+     */
     private static function normalizeRule(array $rule): array
     {
         $match_type = trim((string) ($rule['match_type'] ?? ''));
-        if (!\in_array($match_type, ['', 'exact', 'contains', 'regex'], true)) {
+        if (!in_array($match_type, ['', 'exact', 'contains', 'regex'], true)) {
             $match_type = '';
         }
 
         $render_mode = trim((string) ($rule['render_mode'] ?? 'text'));
-        if (!\in_array($render_mode, ['text', 'icon', 'icon-text', 'auto'], true)) {
+        if (!in_array($render_mode, ['text', 'icon', 'icon-text', 'auto'], true)) {
             $render_mode = 'text';
         }
 
         $icon_type = trim((string) ($rule['icon_type'] ?? 'class'));
-        if (!\in_array($icon_type, ['class', 'text', 'url'], true)) {
+        if (!in_array($icon_type, ['class', 'text', 'url'], true)) {
             $icon_type = 'class';
         }
 
         $label_mode = trim((string) ($rule['label_mode'] ?? 'value'));
-        if (!\in_array($label_mode, ['value', 'fixed', 'none'], true)) {
+        if (!in_array($label_mode, ['value', 'fixed', 'none'], true)) {
             $label_mode = 'value';
         }
 
         $tooltip_mode = trim((string) ($rule['tooltip_mode'] ?? 'auto'));
-        if (!\in_array($tooltip_mode, ['auto', 'fixed', 'none'], true)) {
+        if (!in_array($tooltip_mode, ['auto', 'fixed', 'none'], true)) {
             $tooltip_mode = 'auto';
         }
 
         $position = trim((string) ($rule['position'] ?? 'after-title'));
-        if (!\in_array($position, ['before-title', 'after-title'], true)) {
+        if (!in_array($position, ['before-title', 'after-title'], true)) {
             $position = 'after-title';
         }
 
         return [
-            'id'           => trim((string) ($rule['id'] ?? uniqid('badge_', true))),
-            'enabled'      => (bool) ($rule['enabled'] ?? true),
-            'key'          => trim((string) ($rule['key'] ?? self::primaryNoteKey())),
-            'match_type'   => $match_type,
-            'match_value'  => trim((string) ($rule['match_value'] ?? '')),
-            'render_mode'  => $render_mode,
-            'icon_type'    => $icon_type,
-            'icon_value'   => trim((string) ($rule['icon_value'] ?? '')),
-            'label_mode'   => $label_mode,
-            'label'        => trim((string) ($rule['label'] ?? '')),
-            'tooltip_mode' => $tooltip_mode,
-            'title'        => trim((string) ($rule['title'] ?? '')),
-            'class'        => trim((string) ($rule['class'] ?? 'mbg-badge mbg-badge--generic')),
-            'position'     => $position,
-            'sort_order'   => (int) ($rule['sort_order'] ?? 0),
+            'id'            => trim((string) ($rule['id'] ?? uniqid('badge_', true))),
+            'enabled'       => (bool) ($rule['enabled'] ?? true),
+            'key'           => trim((string) ($rule['key'] ?? self::primaryNoteKey())),
+            'match_type'    => $match_type,
+            'match_value'   => trim((string) ($rule['match_value'] ?? '')),
+            'render_mode'   => $render_mode,
+            'icon_type'     => $icon_type,
+            'icon_value'    => trim((string) ($rule['icon_value'] ?? '')),
+            'label_mode'    => $label_mode,
+            'label'         => trim((string) ($rule['label'] ?? '')),
+            'tooltip_mode'  => $tooltip_mode,
+            'title'         => trim((string) ($rule['title'] ?? '')),
+            'class'         => trim((string) ($rule['class'] ?? 'mbg-badge mbg-badge--generic')),
+            'position'      => $position,
+            'sort_order'    => (int) ($rule['sort_order'] ?? 0),
+            'page_contexts' => self::normalizePageContexts($rule['page_contexts'] ?? [self::PAGE_CONTEXT_ALL]),
         ];
     }
 
-    private static function bestRuleForValue(array $rules, array $value): ?array
+    /**
+     * Sucht die beste sichtbare Regel für einen extrahierten Wert.
+     *
+     * Die Reihenfolge ist:
+     * 1. enabled
+     * 2. page_context sichtbar
+     * 3. Match-Stärke
+     * 4. sort_order
+     */
+    private static function bestRuleForValue(array $rules, array $value, string $page_context): ?array
     {
         $best_rule       = null;
         $best_score      = -1;
@@ -554,6 +775,10 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
 
         foreach ($rules as $rule) {
             if (!(bool) ($rule['enabled'] ?? false)) {
+                continue;
+            }
+
+            if (!self::ruleVisibleInPageContext($rule, $page_context)) {
                 continue;
             }
 
@@ -575,6 +800,30 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         return $best_rule;
     }
 
+    /**
+     * Prüft, ob eine Regel im aktuellen Seitenkontext sichtbar ist.
+     */
+    private static function ruleVisibleInPageContext(array $rule, string $page_context): bool
+    {
+        $page_contexts = self::normalizePageContexts($rule['page_contexts'] ?? [self::PAGE_CONTEXT_ALL]);
+
+        if (in_array(self::PAGE_CONTEXT_ALL, $page_contexts, true)) {
+            return true;
+        }
+
+        return in_array(trim($page_context), $page_contexts, true);
+    }
+
+    /**
+     * Ermittelt die Match-Priorität einer Regel für einen extrahierten Wert.
+     *
+     * Priorität:
+     * - exact    => 400
+     * - contains => 300
+     * - regex    => 200
+     * - generic  => 100
+     * - kein Match => -1
+     */
     private static function rulePriority(array $rule, array $value): int
     {
         $rule_key  = strtolower(trim((string) ($rule['key'] ?? '')));
@@ -600,6 +849,9 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         };
     }
 
+    /**
+     * Baut den finalen Badge-Text.
+     */
     private static function composeBadgeLabel(array $rule, array $value): string
     {
         $label_mode = (string) ($rule['label_mode'] ?? 'value');
@@ -613,6 +865,9 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
         };
     }
 
+    /**
+     * Baut den finalen Tooltip-Text.
+     */
     private static function composeBadgeTitle(array $rule, array $value): string
     {
         $tooltip_mode = (string) ($rule['tooltip_mode'] ?? 'auto');
