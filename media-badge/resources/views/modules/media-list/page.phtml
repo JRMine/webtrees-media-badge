@@ -14,6 +14,11 @@ use Illuminate\Support\Collection;
 use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
 
 /**
+ * Media list page with badge support.
+ *
+ * This view renders media cards in the media list context and passes the
+ * explicit page context "media-list" into the shared badge list component.
+ *
  * @var int                   $count
  * @var string                $filter
  * @var string                $folder
@@ -32,7 +37,6 @@ use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
  */
 
 ?>
-
 <h2 class="wt-page-title">
     <?= $title ?>
 </h2>
@@ -116,8 +120,9 @@ use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
                         <div class="card-header">
                             <div class="mbg-media-card-title">
                                 <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
-                                    'record'   => $media_object,
-                                    'position' => 'before-title',
+                                    'record'       => $media_object,
+                                    'position'     => 'before-title',
+                                    'page_context' => 'media-list',
                                 ]) ?>
 
                                 <h4 class="card-title mb-0">
@@ -125,8 +130,9 @@ use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
                                 </h4>
 
                                 <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
-                                    'record'   => $media_object,
-                                    'position' => 'after-title',
+                                    'record'       => $media_object,
+                                    'position'     => 'after-title',
+                                    'page_context' => 'media-list',
                                 ]) ?>
                             </div>
                         </div>
