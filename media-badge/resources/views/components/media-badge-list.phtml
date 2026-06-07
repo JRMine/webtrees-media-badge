@@ -5,25 +5,57 @@ declare(strict_types=1);
 use Fisharebest\Webtrees\Media;
 use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
 
+use function array_filter;
+use function array_values;
+
 /**
+ * Reusable badge list component.
+ *
+ * Purpose:
+ * - Resolve badges for a media record in a given page context
+ * - Filter them by position (before-title / after-title)
+ * - Render the final badge list through the shared single-badge component
+ *
+ * Expected variables:
  * @var Media  $record
  * @var string $position
+ * @var string $page_context
  */
 
-$position = $position ?? 'after-title';
+// Default output position if none was passed by the parent view.
+$position = isset($position) && is_string($position) && $position !== ''
+    ? $position
+    : 'after-title';
 
+// Default page context for backward compatibility.
+// This keeps old integrations working even if they do not yet pass a context.
+$page_context = isset($page_context) && is_string($page_context) && $page_context !== ''
+    ? $page_context
+    : 'media-page';
+
+/**
+ * Resolve all badges for the current media record in the given page context,
+ * then keep only badges for the requested visual position.
+ */
 $badges = array_values(array_filter(
-    MediaBadgeModule::resolveBadgesForMedia($record),
+    MediaBadgeModule::resolveBadgesForMedia($record, $page_context),
     static fn (array $badge): bool => ($badge['position'] ?? 'after-title') === $position
 ));
 
+// Nothing to render if no badges are available for this record / position / context.
 if ($badges === []) {
     return;
 }
 ?>
 
-<span class="mbg-badge-list mbg-badge-list--<?= e($position) ?>">
+<span
+    class="mbg-badge-list mbg-badge-list--<?= e($position) ?>"
+    data-mbg-position="<?= e($position) ?>"
+    data-mbg-page-context="<?= e($page_context) ?>"
+>
     <?php foreach ($badges as $badge) : ?>
-        <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge', ['badge' => $badge]) ?>
+        <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge', [
+            'badge' => $badge,
+        ]) ?>
     <?php endforeach ?>
 </span>
