@@ -13,6 +13,12 @@ use Illuminate\Support\Collection;
 use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
 
 /**
+ * Random media slideshow with badge support.
+ *
+ * This view renders a single media object inside the random media / slideshow
+ * context and passes the explicit page context "random-media-slide-show"
+ * into the shared badge list component.
+ *
  * @var int                        $block_id
  * @var int                        $delay
  * @var Collection<int,Family>     $linked_families
@@ -26,7 +32,6 @@ use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
  */
 
 ?>
-
 <div class="wt-slide-show-container">
     <?php if ($show_controls) : ?>
         <div class="wt-slide-show-controls text-center">
@@ -51,8 +56,9 @@ use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
         <figcaption class="wt-slide-show-figcaption">
             <span class="mbg-media-title-line mbg-media-title-line--center">
                 <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
-                    'record'   => $media,
-                    'position' => 'before-title',
+                    'record'       => $media,
+                    'position'     => 'before-title',
+                    'page_context' => 'random-media-slide-show',
                 ]) ?>
 
                 <a href="<?= e($media->url()) ?>">
@@ -60,8 +66,9 @@ use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
                 </a>
 
                 <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
-                    'record'   => $media,
-                    'position' => 'after-title',
+                    'record'       => $media,
+                    'position'     => 'after-title',
+                    'page_context' => 'random-media-slide-show',
                 ]) ?>
             </span>
         </figcaption>
