@@ -429,25 +429,40 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
 
             // Wenn gar keine sichtbare Regel für diesen Key existiert,
             // soll in diesem Kontext überhaupt nichts ausgegeben werden.
-            if ($rule === null) {
-                if (!self::hasVisibleRuleForKey($rules, (string) ($value['key'] ?? ''), $page_context)) {
-                    continue;
-                }
+if ($rule === null) {
+    $key = (string) ($value['key'] ?? '');
 
-                // Sichtbarer Fallback: nur wenn der Key im Kontext grundsätzlich erlaubt ist.
-                $badges[] = [
-                    'label'       => $value['value'],
-                    'class'       => 'mbg-badge mbg-badge--generic',
-                    'position'    => 'after-title',
-                    'sort_order'  => 999,
-                    'title'       => $value['key'] . ': ' . $value['value'],
-                    'render_mode' => 'text',
-                    'icon_type'   => 'class',
-                    'icon_value'  => '',
-                ];
+    $has_rules_for_key         = self::hasRulesForKey($rules, $key);
+    $has_visible_rule_for_key  = self::hasVisibleRuleForKey($rules, $key, $page_context);
 
-                continue;
-            }
+    // Fall B:
+    // Es gibt Regeln für diesen Key, aber in diesem Kontext ist keine sichtbar.
+    // => dann soll gar nichts gerendert werden.
+    if ($has_rules_for_key && !$has_visible_rule_for_key) {
+        continue;
+    }
+
+    // Fall A:
+    // Es gibt gar keine Regeln für diesen Key.
+    // => generischer Fallback wie bisher.
+    //
+    // Fall C:
+    // Es gibt sichtbare Regeln, aber keine davon matcht.
+    // => ebenfalls generischer Fallback.
+    $badges[] = [
+        'label'       => $value['value'],
+        'class'       => 'mbg-badge mbg-badge--generic',
+        'position'    => 'after-title',
+        'sort_order'  => 999,
+        'title'       => $value['key'] . ': ' . $value['value'],
+        'render_mode' => 'text',
+        'icon_type'   => 'class',
+        'icon_value'  => '',
+    ];
+
+    continue;
+}
+
 
             $badges[] = [
                 'label'       => self::composeBadgeLabel($rule, $value),
@@ -468,6 +483,33 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
 
         return $badges;
     }
+
+/**
+ * Prüft, ob für einen Key überhaupt aktivierte Regeln existieren.
+ *
+ * Wichtig für die Fallback-Logik:
+ * - keine Regeln für den Key => generischer Fallback erlaubt
+ * - Regeln vorhanden, aber im Kontext unsichtbar => kein Badge
+ */
+private static function hasRulesForKey(array $rules, string $key): bool
+{
+    $normalized_key = strtolower(trim($key));
+
+    foreach ($rules as $rule) {
+        if (!(bool) ($rule['enabled'] ?? false)) {
+            continue;
+        }
+
+        $rule_key = strtolower(trim((string) ($rule['key'] ?? '')));
+
+        if ($rule_key !== '' && $rule_key === $normalized_key) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 
     /**
      * Prüft, ob es für einen Key grundsätzlich mindestens eine
