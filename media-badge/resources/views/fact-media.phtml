@@ -1,0 +1,86 @@
+<?php
+
+declare(strict_types=1);
+
+use Fisharebest\Webtrees\Fact;
+use Fisharebest\Webtrees\Gedcom;
+use Fisharebest\Webtrees\Media;
+use Fisharebest\Webtrees\Registry;
+use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
+
+/**
+ * Render nested media objects inside facts/events.
+ *
+ * This override replaces the default fact-media rendering for level-2 media
+ * references (2 OBJE ...) inside facts/events.
+ *
+ * Goal:
+ * - keep thumbnails visible
+ * - render the media title
+ * - render Media Badge output around the title
+ * - fall back to the original GEDCOM field rendering when the media object
+ *   cannot be resolved
+ *
+ * @var Fact $fact
+ */
+
+?>
+
+<?php if (preg_match_all('/\n(2 OBJE\b.*(?:\n[^2].*)*)/', $fact->gedcom(), $matches, PREG_SET_ORDER) > 0) : ?>
+    <div class="wt-fact-media mt-2">
+        <?php foreach ($matches as $match) : ?>
+            <?php
+            $gedcom_block = $match[1];
+            $nested_media = null;
+
+            if (preg_match('/^2 OBJE @(' . Gedcom::REGEX_XREF . ')@$/m', $gedcom_block, $xref_match) === 1) {
+                $nested_media = Registry::mediaFactory()->make($xref_match[1], $fact->record()->tree());
+            }
+            ?>
+
+            <?php if ($nested_media instanceof Media) : ?>
+                <div class="mb-2">
+                    <div class="d-flex flex-wrap mb-2">
+                        <?php foreach ($nested_media->mediaFiles() as $media_file) : ?>
+                            <div class="me-1 mb-1">
+                                <?= $media_file->displayImage(100, 100, 'contain', []) ?>
+                            </div>
+                        <?php endforeach ?>
+                    </div>
+
+                    <div class="mbg-media-title-line mb-2">
+                        <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
+                            'record'       => $nested_media,
+                            'position'     => 'before-title',
+                            'page_context' => 'media-tab',
+                        ]) ?>
+
+                        <a href="<?= e($nested_media->url()) ?>">
+                            <?= $nested_media->fullName() ?>
+                        </a>
+
+                        <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
+                            'record'       => $nested_media,
+                            'position'     => 'after-title',
+                            'page_context' => 'media-tab',
+                        ]) ?>
+                    </div>
+
+                    <?php foreach ($nested_media->facts(['NOTE']) as $note) : ?>
+                        <?= view('fact-gedcom-fields', [
+                            'gedcom' => $note->gedcom(),
+                            'parent' => $nested_media->tag(),
+                            'tree'   => $fact->record()->tree(),
+                        ]) ?>
+                    <?php endforeach ?>
+                </div>
+            <?php else : ?>
+                <?= view('fact-gedcom-fields', [
+                    'gedcom' => $gedcom_block,
+                    'parent' => $fact->tag(),
+                    'tree'   => $fact->record()->tree(),
+                ]) ?>
+            <?php endif ?>
+        <?php endforeach ?>
+    </div>
+<?php endif ?>
