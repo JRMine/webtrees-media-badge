@@ -8,6 +8,8 @@ use Fisharebest\Webtrees\Individual;
 use Fisharebest\Webtrees\Media;
 use Illuminate\Support\Collection;
 use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
+use Fisharebest\Webtrees\Gedcom;
+use Fisharebest\Webtrees\Registry;
 
 /**
  * Standard multimedia tab with badge support.
@@ -112,14 +114,44 @@ use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
 
                     <td class="<?= $styleadd ?>">
                         <?php if (preg_match_all('/\n([2-4] OBJE .*)/', $fact->gedcom(), $matches, PREG_SET_ORDER) > 0) : ?>
-                            <?php foreach ($matches as $match) : ?>
-                                <?= view('fact-gedcom-fields', [
-                                    'gedcom' => $match[1],
-                                    'parent' => $fact->tag(),
-                                    'tree'   => $fact->record()->tree(),
-                                ]) ?>
-                            <?php endforeach ?>
-                        <?php endif ?>
+    <?php foreach ($matches as $match) : ?>
+        <?php
+        $gedcom_line   = trim($match[1]);
+        $nested_media  = null;
+
+        if (preg_match('/^\d+ OBJE @(' . Gedcom::REGEX_XREF . ')@$/', $gedcom_line, $media_match) === 1) {
+            $nested_media = Registry::mediaFactory()->make($media_match[1], $fact->record()->tree());
+        }
+        ?>
+
+        <?php if ($nested_media instanceof Media) : ?>
+            <div class="mbg-media-title-line mb-2">
+                <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
+                    'record'       => $nested_media,
+                    'position'     => 'before-title',
+                    'page_context' => 'media-tab',
+                ]) ?>
+
+                <a href="<?= e($nested_media->url()) ?>">
+                    <?= $nested_media->fullName() ?>
+                </a>
+
+                <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
+                    'record'       => $nested_media,
+                    'position'     => 'after-title',
+                    'page_context' => 'media-tab',
+                ]) ?>
+            </div>
+        <?php else : ?>
+            <?= view('fact-gedcom-fields', [
+                'gedcom' => $match[1],
+                'parent' => $fact->tag(),
+                'tree'   => $fact->record()->tree(),
+            ]) ?>
+        <?php endif ?>
+    <?php endforeach ?>
+<?php endif ?>
+
                     </td>
                 </tr>
             <?php endif ?>
