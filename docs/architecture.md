@@ -189,3 +189,6 @@ This keeps the module maintainable and makes it easier to extend later with:
 
 - `docs/configuration.md`
 - `docs/rule-model.md`
+
+Modules Compatibility Issues
+Media Badge should prefer compatibility through small reusable rendering fragments over full template ownership wherever possible.

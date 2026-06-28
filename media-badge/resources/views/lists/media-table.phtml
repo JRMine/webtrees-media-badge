@@ -111,6 +111,10 @@ $count_sources = DB::table('sources')
                             <?= $media_object->fullName() ?>
                         </a>
 
+                        <?= view(MediaBadgeModule::MODULE_NAME . '::components/source-transcription-badge', [
+                            'record' => $media_object,
+                        ]) ?>
+
                         <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
                             'record'       => $media_object,
                             'position'     => 'after-title',

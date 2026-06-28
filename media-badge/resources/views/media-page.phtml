@@ -38,6 +38,10 @@ use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
 
             <span><?= $record->fullName() ?></span>
 
+            <?= view(MediaBadgeModule::MODULE_NAME . '::components/source-transcription-badge', [
+                'record' => $record,
+            ]) ?>
+
             <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [
                 'record'   => $record,
                 'position' => 'after-title',
