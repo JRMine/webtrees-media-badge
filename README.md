@@ -121,9 +121,13 @@ This means badges are no longer limited to the media detail page.
 
 ## Installation
 
-1. Copy the module folder to:
+1. Copy the module folder to one of these locations:
 
        modules_v4/media-badge/
+       modules_v4/webtrees-media-badge/
+
+   The second form is useful when installing the repository archive directly
+   from GitHub.
 
 2. Open webtrees.
 3. Enable the module in the control panel.
