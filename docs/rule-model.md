@@ -4,31 +4,27 @@ This document describes the internal rule model used by the Media Badge module.
 
 ## Purpose
 
-The rule model separates content from presentation.
+The rule model separates **content** from **presentation**.
 
-Content comes from Shared Notes linked to media records.
+- Content comes from note values attached to media records.
+- Presentation is controlled by configurable badge rules.
 
-Presentation is controlled by badge rules.
+This means the note stores the actual information, while the rule model decides how that information is rendered, where it is visible, and which visual style is applied.
 
-This means the note defines the actual value, while the rule defines how that value is displayed.
-
-The model is also designed so that future visibility controls can be added without changing the note format itself.
+The same note value can therefore be reused across multiple media-related views without changing the source note format.
 
 ## Overview
 
-The module processes badge output in four steps:
+The module resolves badge output in six logical steps:
 
-1. Extract note values from linked notes
-2. Load and normalize configured badge rules
-3. Select the best matching rule for each extracted value
-4. Build the final badge output for rendering
+1. Extract tagged note values from the media record
+2. Load stored badge rules from module settings
+3. Normalize rules into a stable internal structure
+4. Filter and rank candidate rules by key, value, and page context
+5. Compose the final badge payload
+6. Render the prepared badge data in shared view components
 
-With page-context visibility, the effective process becomes:
-
-1. Extract note values from linked notes
-2. Load and normalize configured badge rules
-3. Filter matching rules by value and page context
-4. Build the final badge output for rendering
+This keeps rule matching centralized and prevents individual views from having to understand badge logic themselves.
 
 ## 1. Extracted note values
 
@@ -36,21 +32,25 @@ The module reads note lines based on the configured global note keys.
 
 Example note content:
 
-    MEDIA LICENCE: CC BY 4.0
-    MEDIA RIGHTS: Public Domain
-    MEDIA STATUS: Verified
+```text
+MEDIA LICENCE: CC BY 4.0
+MEDIA RIGHTS: Public Domain
+MEDIA STATUS: Verified
+```
 
 Each matching line is converted into an internal value object with these fields:
 
 - `key` — the configured note key, for example `MEDIA LICENCE`
 - `value` — the text after the separator, for example `CC BY 4.0`
-- `line` — the original full line from the note
+- `line` — the original full line, for example `MEDIA LICENCE: CC BY 4.0`
 
 Example extracted value:
 
-- `key`: `MEDIA LICENCE`
-- `value`: `CC BY 4.0`
-- `line`: `MEDIA LICENCE: CC BY 4.0`
+```text
+key   = MEDIA LICENCE
+value = CC BY 4.0
+line  = MEDIA LICENCE: CC BY 4.0
+```
 
 ## 2. Rule structure
 
@@ -61,23 +61,23 @@ A rule can contain the following fields:
 - `id` — unique internal identifier
 - `enabled` — whether the rule is active
 - `key` — note key the rule applies to
-- `match_type` — how the value is matched
+- `match_type` — how the note value is matched
 - `match_value` — value used for matching
-- `render_mode` — how the badge should be displayed
+- `render_mode` — how the badge is displayed
 - `icon_type` — where the icon comes from
 - `icon_value` — icon class, text, or URL
-- `label_mode` — how the badge label is determined
+- `label_mode` — how the visible label is determined
 - `label` — fixed label text, if used
 - `tooltip_mode` — how the tooltip is determined
 - `title` — fixed tooltip text, if used
-- `class` — CSS classes for badge styling
+- `class` — CSS classes used for styling
 - `position` — placement relative to the media title
-- `sort_order` — output order of badges
+- `sort_order` — output order within the same position
 - `page_contexts` — allowed page contexts for rendering
 
 ## 3. Normalized rule fields
 
-After normalization, each rule uses a stable internal structure.
+After normalization, every rule uses a stable internal structure.
 
 ### Core fields
 
@@ -110,7 +110,7 @@ After normalization, each rule uses a stable internal structure.
 
 Controls whether the rule is active.
 
-Possible values:
+Supported values:
 
 - `true`
 - `false`
@@ -142,7 +142,7 @@ Supported values:
 
 ### `match_value`
 
-The value used by `match_type`.
+Contains the value used by `match_type`.
 
 Examples:
 
@@ -164,10 +164,10 @@ Supported values:
 
 Meaning:
 
-- `text` — output label only
-- `icon` — output icon only
-- `icon-text` — output icon and label
-- `auto` — choose the most sensible output based on available icon and label data
+- `text` — show label only
+- `icon` — show icon only
+- `icon-text` — show icon and label
+- `auto` — choose automatically based on available icon and label data
 
 ### `icon_type`
 
@@ -182,7 +182,7 @@ Supported values:
 Meaning:
 
 - `class` — CSS icon class, for example `bi bi-lock-fill`
-- `text` — plain text icon, for example `PD`
+- `text` — plain text icon, for example `CC`
 - `url` — image or SVG URL
 
 ### `icon_value`
@@ -210,7 +210,7 @@ Meaning:
 
 - `value` — use the extracted note value
 - `fixed` — use the configured `label`
-- `none` — no label is displayed
+- `none` — do not display a label
 
 ### `label`
 
@@ -232,9 +232,9 @@ Supported values:
 
 Meaning:
 
-- `auto` — generate tooltip from key and value
+- `auto` — generate the tooltip from key and value
 - `fixed` — use the configured `title`
-- `none` — no tooltip is displayed
+- `none` — do not output a tooltip
 
 ### `title`
 
@@ -256,7 +256,7 @@ Examples:
 
 ### `position`
 
-Defines where the badge appears in relation to the media title.
+Defines where the badge appears relative to the media title.
 
 Supported values:
 
@@ -279,9 +279,7 @@ Examples:
 
 Defines on which page contexts the rule may be used.
 
-This field is intended for fine-grained visibility control across different media-related views.
-
-Typical values:
+Supported values typically include:
 
 - `all`
 - `media-page`
@@ -296,7 +294,7 @@ Meaning:
 - `all` — the rule is valid everywhere
 - specific context names — the rule is only valid in those contexts
 
-A rule that is not allowed in the current page context must not be used for badge output.
+If a rule is not allowed in the current page context, it must not be used for badge output.
 
 ## 5. Rule normalization
 
@@ -306,9 +304,9 @@ Normalization ensures that:
 
 - missing fields receive default values
 - invalid values are replaced with safe defaults
-- each rule has a unique `id`
-- numeric fields are cast correctly
-- empty fields are handled consistently
+- each rule has a stable `id`
+- numeric fields are cast consistently
+- empty fields are handled predictably
 - visibility fields use a consistent internal structure
 
 Typical default values include:
@@ -330,14 +328,14 @@ Typical default values include:
 
 ### Notes on normalizing `page_contexts`
 
-The following behavior is recommended:
+The module should normalize `page_contexts` with the following behavior:
 
 - if `page_contexts` is missing, it becomes `["all"]`
 - if `page_contexts` is empty, it becomes `["all"]`
 - invalid or unknown context names are removed
-- if `all` is present, other context names are redundant and may be ignored internally
+- if `all` is present, other context names are redundant and may be discarded internally
 
-This preserves backward compatibility for existing saved rules.
+This preserves backward compatibility for older saved rules.
 
 ## 6. Matching model
 
@@ -349,7 +347,7 @@ A rule only participates if:
 - its `key` matches the extracted key
 - it is allowed in the current page context
 
-Then the module evaluates the rule according to `match_type`.
+Only then is the rule evaluated according to `match_type`.
 
 ### Generic rule
 
@@ -396,9 +394,11 @@ Example:
 - rule match value: `^CC `
 - result: match
 
-### Page-context filtering
+## 7. Page-context filtering
 
-After key and value matching, the rule must also be valid for the current page context.
+Page-context filtering is part of normal rule resolution, not a future extension.
+
+After key and value checks, the rule must also be valid for the current page context.
 
 Example:
 
@@ -407,9 +407,9 @@ Example:
 - current page context: `album-tab`
 - result: rule must not be used
 
-This filtering should happen before the final badge object is built.
+This filtering happens before the final badge object is built.
 
-## 7. Rule priority
+## 8. Rule priority
 
 If multiple rules match the same extracted value, the module chooses the best one by priority.
 
@@ -420,7 +420,7 @@ Recommended priority order:
 3. `regex`
 4. generic key rule
 
-If two rules have the same match strength, the lower `sort_order` should win.
+If two rules have the same match strength, the lower `sort_order` wins.
 
 This allows:
 
@@ -428,10 +428,9 @@ This allows:
 - broader fallback rules for the same key
 - predictable behavior when several rules exist
 
-Page-context visibility does not replace rule priority.  
-It limits the set of candidate rules before priority is applied.
+Page-context visibility does not replace rule priority. It reduces the candidate set before priority is applied.
 
-## 8. Badge composition
+## 9. Badge composition
 
 Once the best rule is selected, the module builds the final badge object.
 
@@ -448,9 +447,9 @@ A final badge typically contains:
 
 This final structure is what the view uses for rendering.
 
-The page-context information is normally resolved before this step and does not need to be included in the final rendered badge object.
+The page context is normally resolved before this step and does not need to remain in the final badge payload.
 
-## 9. Label composition
+## 10. Label composition
 
 The badge label is determined by `label_mode`.
 
@@ -478,7 +477,7 @@ Do not display any label.
 
 This is useful for icon-only badges.
 
-## 10. Tooltip composition
+## 11. Tooltip composition
 
 The badge tooltip is determined by `tooltip_mode`.
 
@@ -505,37 +504,23 @@ Example:
 
 Do not output a tooltip.
 
-If a rule is not visible in the current page context, no tooltip should be generated at all.
+If a rule is not visible in the current page context, no tooltip is generated because no badge is rendered at all.
 
-## 11. Render behavior
+## 12. Render behavior
 
-The view decides how to render the badge based on `render_mode`.
+The shared badge view decides how to render the badge based on `render_mode`.
 
 ### `text`
 
 Show text only.
 
-Possible output:
-
-- label only
-- no icon
-
 ### `icon`
 
 Show icon only.
 
-Possible output:
-
-- icon only
-- no label
-
 ### `icon-text`
 
 Show both icon and text.
-
-Possible output:
-
-- icon followed by label
 
 ### `auto`
 
@@ -543,37 +528,37 @@ Resolve automatically.
 
 Typical behavior:
 
-- if icon and label are available, render as icon and text
+- if icon and label are available, render icon and text
 - if only icon is available, render icon only
 - if only label is available, render text only
 
 Render behavior only applies after rule selection and visibility filtering are complete.
 
-## 12. Fallback behavior
+## 13. Fallback behavior
 
-If no specific rule matches an extracted value, the module can still create a generic fallback badge.
+If no specific rule matches an extracted value, the module may still create a generic fallback badge.
 
-Typical fallback behavior:
+Typical fallback behavior uses:
 
-- use extracted value as label
-- use a generic CSS class
-- place the badge after the title
-- use a high `sort_order`, for example `999`
+- the extracted value as label
+- a generic CSS class
+- `after-title` as position
+- a high `sort_order`, for example `999`
 
-This ensures badge output still works even when no value-specific rule exists.
+### Effective fallback rules
 
-### Fallback and page context
+The implemented behavior should be understood in three cases:
 
-Fallback behavior should still respect page-context visibility.
+1. **No rules exist for the key**
+   - create a generic fallback badge
+2. **Rules exist for the key, but none are visible in the current context**
+   - render nothing
+3. **Visible rules exist for the key, but none match the current value**
+   - create a generic fallback badge
 
-Recommended behavior:
+This prevents badges from appearing in contexts where they were intentionally disabled, while still preserving sensible output where no specific value rule exists.
 
-- if a generic fallback rule exists and is valid for the current context, use it
-- if no visible rule exists for the current context, do not render a badge
-
-This prevents badges from leaking into views where they are intentionally disabled.
-
-## 13. Storage model
+## 14. Storage model
 
 The module stores its settings in module preferences.
 
@@ -588,17 +573,19 @@ Stores the global note keys entered in module configuration.
 
 Typical format:
 
-    MEDIA LICENCE
-    MEDIA RIGHTS
-    MEDIA STATUS
+```text
+MEDIA LICENCE
+MEDIA RIGHTS
+MEDIA STATUS
+```
 
 ### `BADGE_RULES`
 
 Stores the normalized badge rules as JSON.
 
-Each rule is serialized with the fields described above, including visibility-related fields such as `page_contexts`.
+Each rule is serialized with the fields described above, including `page_contexts`.
 
-## 14. Example rule set
+## 15. Example rule set
 
 A typical configuration may include:
 
@@ -620,7 +607,7 @@ With page-context visibility, the same rule set could also define:
 - status badges visible only on the media detail page
 - rights badges visible only on selected linked-media contexts
 
-## 15. Design goals
+## 16. Design goals
 
 The rule model is designed to support:
 
@@ -629,31 +616,29 @@ The rule model is designed to support:
 - stable fallback behavior
 - flexible presentation
 - context-aware visibility
-- future extension without changing the note format
+- extension without changing the note format
 
-## 16. Future extensions
+## 17. Future extensions
 
 The current rule model can be extended later with additional controls such as:
 
-- page context visibility
-- per-key visibility on specific views
-- user group visibility
+- user-group visibility
 - access-level visibility
 - icon presets
 - local icon file selection
 - import and export of rules
 - grouped rule management in the admin UI
+- additional badge sources beyond note values
 
-## 17. Summary
+## 18. Summary
 
 The Media Badge rule model follows a simple principle:
 
 - notes provide the content
 - rules provide the presentation
+- page-context visibility controls where a rule may appear
 
-With future visibility extensions, the same rule model can also define where a badge may appear, without changing how note content is stored.
-
-This keeps Shared Notes reusable and allows badges to be displayed in a flexible and configurable way across different media-related contexts.
+This keeps note content reusable and allows badges to be displayed in a flexible, centralized, and configurable way across different media-related contexts.
 
 ## Related documentation
 

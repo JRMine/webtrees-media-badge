@@ -2,13 +2,15 @@
 
 This document explains how to configure the **Media Badge** module in webtrees.
 
-The module reads tagged values from media-related `NOTE` facts and turns them into visual badges shown next to the media title. Configuration happens on two levels:
+The module reads tagged values from media-related `NOTE` facts and turns them into visual badges shown next to the media title.
+
+Configuration happens on two levels:
 
 1. Global note keys
 2. Badge rules
 
-Global note keys define what to read.  
-Badge rules define how to display it.
+Global note keys define **what to read**.  
+Badge rules define **how to display it**.
 
 ---
 
@@ -237,23 +239,15 @@ Example:
 
 ## 9. Badge visibility by page context
 
-> **Planned:** This section describes the intended configuration model for fine-grained badge visibility by page context. It documents the planned direction for a next development step.
+Badge visibility can be configured per badge rule using the field `page_contexts`.
 
-Badges should not only be controlled by note key and value, but also by where the media object is shown.
+This allows badge output to be restricted not only by note key and note value, but also by **where the media object is currently shown**.
 
 Examples:
 
 - `MEDIA LICENCE` on the media detail page, media list, and album/gallery view
 - `MEDIA STATUS` only on the media detail page
 - `MEDIA RIGHTS` on the media detail page and on linked media shown on person or family pages
-
-This allows badge output to be configured more precisely without duplicating the underlying rule logic for label, tooltip, icon, or styling.
-
-### Basic idea
-
-Page-context visibility should be configured **per badge rule**.
-
-Each rule can define the page contexts in which it is allowed to render.
 
 The existing badge resolution flow stays the same in principle:
 
@@ -267,7 +261,7 @@ Instead, each view should pass its current page context into the central badge r
 
 ### Configuration model
 
-A badge rule is expected to gain an additional field called `page_contexts`.
+Each badge rule stores an additional field called `page_contexts`.
 
 Example:
 
@@ -294,184 +288,97 @@ Example:
 
 ### Supported page contexts
 
-The following contexts are planned for the first implementation stage:
+The following contexts are currently supported:
 
 - `all`  
-  The rule is active on all supported page types
+  The rule is active on all supported page types.
 
 - `media-page`  
-  Media detail page
+  Media detail page.
 
 - `media-list`  
-  Media list page
+  Media list page.
 
 - `linked-media-table`  
-  Linked media on person, family, or other record pages where the media table is used
+  Linked media on person, family, or other record pages where the media table is used.
 
 - `album-tab`  
-  Album, gallery, or thumbnail view
+  Album, gallery, or thumbnail view.
 
 - `media-tab`  
-  Multimedia / media tab on person or family pages
+  Multimedia tab and related fact/event media rendering paths that use the same integration context.
 
 - `random-media-slide-show`  
-  Random media / slide-show context, for example on the home page
+  Random media / slide-show context, for example on the home page.
 
 More contexts can be added later if additional media-related entry points are supported.
 
 ### Backward compatibility and defaults
 
-Existing configurations should continue to work without manual migration.
+Existing configurations continue to work without manual migration.
 
-For that reason, the following behavior is recommended:
+The module uses the following behavior:
 
-- if `page_contexts` is missing from a saved rule, it should be treated as `["all"]`
-- an empty value should also be treated as `["all"]`
-- invalid or unknown context values should be ignored during normalization
+- if `page_contexts` is missing from a saved rule, it is treated as `["all"]`
+- an empty value is also treated as `["all"]`
+- invalid or unknown context values are ignored during normalization
 - if `all` is present, additional individual context values have no further effect
 
-This keeps existing rules fully functional and preserves current output behavior by default.
+This keeps existing rules fully functional and preserves previous output behavior by default.
 
-### Recommended admin UI
+### Admin UI
 
-Page-context visibility should be configured in the badge rule editor, not in the global NOTE-key configuration.
+Page-context visibility is configured in the badge rule editor, not in the global NOTE-key configuration.
 
-Recommended UI approach:
+The admin UI provides:
 
-- a checkbox group or multi-select field
-- human-readable labels instead of only technical context names
-- default selection: **All pages**
+- a page-context selection in `admin/badge-edit.phtml`
+- a rule overview in `admin/badges.phtml` showing where a rule is active
 
-Possible labels:
-
-- All pages
-- Media detail page
-- Media list
-- Linked media on record pages
-- Album / gallery / thumbnail view
-- Multimedia tab
-- Random media slideshow
-
-The admin overview should also show where a rule is active.
-
-### Render logic
-
-Page-context filtering should be part of the central badge resolution.
-
-Recommended evaluation order:
-
-1. extract NOTE values for a media object
-2. collect candidate rules for the relevant key
-3. keep only rules that:
-   - are enabled
-   - match the value
-   - are visible in the current page context
-4. choose the best matching visible rule
-5. build the badge data
-6. render the badge
-
-Page-context visibility should be checked **before** HTML output is generated.
-
-A badge that is not allowed in the current context must not appear:
-
-- visibly in the output
-- in a tooltip
-- as hidden or empty badge markup
-
-### Internal implementation direction
-
-A central context parameter is recommended, for example:
-
-```php
-resolveBadgesForMedia($record, 'media-page')
-```
-
-Views can then pass their own context, for example:
-
-- `media-page.phtml` → `media-page`
-- `lists/media-table.phtml` → `linked-media-table`
-- `modules/media-list/page.phtml` → `media-list`
-- `modules/lightbox/tab.phtml` → `album-tab`
-- `modules/media/tab.phtml` → `media-tab`
-- `modules/random_media/slide-show.phtml` → `random-media-slide-show`
-
-This keeps the visibility check centralized and avoids spreading logic across multiple templates.
-
-### Examples
-
-#### Example A: licence badge visible everywhere
-
-Key:
-
-`MEDIA LICENCE`
-
-Contexts:
-
-`all`
-
-#### Example B: status badge only on the media detail page
-
-Key:
-
-`MEDIA STATUS`
-
-Contexts:
-
-`media-page`
-
-#### Example C: rights badge only in selected views
-
-Key:
-
-`MEDIA RIGHTS`
-
-Contexts:
-
-`media-page`, `linked-media-table`
-
-### Scope boundaries
-
-This feature controls **where** a badge may appear.
-
-It does **not** replace a future user- or access-based visibility system.
-
-The intended separation is:
-
-- **Page-context visibility**  
-  On which page types may the badge be shown?
-
-- **Access-level visibility**  
-  For which users or user groups may the badge be shown?
-
-Both can later be enforced in the same central resolution pipeline, but they should remain separate configuration concerns.
+This keeps context visibility attached to the individual rule where it belongs.
 
 ---
 
-## 10. Default behavior
+## 10. Current output scope
+
+The module currently renders badges in these kinds of media-related output:
+
+- media detail pages
+- media list pages
+- linked media tables on record pages
+- album / gallery / thumbnail views
+- multimedia tab output
+- random media slideshow output
+- media objects shown in fact and event views
+- nested media references inside facts and events
+
+Not every output path has its own dedicated page-context identifier. Some related render paths share the same configured context where this keeps the model simpler and avoids unnecessary duplication.
+
+---
+
+## 11. Default behavior
 
 If no saved badge rules exist, the module uses a built-in default rule set.
 
-The default rules are intended as a safe starting point and cover common media licence scenarios.
+This includes:
 
-They currently include:
+- a generic fallback rule for the primary key
+- specific rules for `CC BY 4.0`
+- specific rules for `CC BY-SA 4.0`
+- specific rules for `Public Domain`
+- a rule for values containing `private`
 
-- a generic fallback rule for the primary note key
-- a specific rule for `CC BY 4.0`
-- a specific rule for `CC BY-SA 4.0`
-- a specific rule for `Public Domain`
-- a specific rule for values containing `private`
-
-These defaults can be edited or replaced later through the admin UI.
+This ensures that a useful badge output is available even before a custom rule set has been defined.
 
 ---
 
-## 11. Example configurations
+## 12. Example configurations
 
-### Example A: generic licence display
+### A. Generic licence display
 
-Global key:
+Global note key:
 
-`MEDIA LICENCE`
+    MEDIA LICENCE
 
 Shared note:
 
@@ -486,9 +393,11 @@ Rule:
 
 Result:
 
-- badge text is `CC BY 4.0`
+A text badge showing:
 
-### Example B: specific rule with fixed tooltip
+`CC BY 4.0`
+
+### B. Specific rule with fixed tooltip
 
 Shared note:
 
@@ -505,10 +414,9 @@ Rule:
 
 Result:
 
-- the badge uses the specific display rule for this licence
-- the tooltip is a fixed explanatory label
+A badge for `CC BY 4.0` with a fixed tooltip.
 
-### Example C: icon-only rule
+### C. Icon-only rule
 
 Shared note:
 
@@ -526,9 +434,9 @@ Rule:
 
 Result:
 
-- only the icon is shown
+Only the icon is shown.
 
-### Example D: SVG URL icon
+### D. SVG URL icon
 
 Shared note:
 
@@ -546,46 +454,44 @@ Rule:
 
 Result:
 
-- a graphic icon is shown together with the text
+A badge with an SVG icon plus text.
 
----
+### E. Context-limited rule
 
-## 12. Current scope
+Shared note:
 
-At the current stage, badge rendering is focused on media-related page output, especially the media title area.
+    MEDIA STATUS: verified
 
-The current implementation already extends badge output across multiple media-related contexts, including media detail pages, media list output, linked media tables, album views, multimedia tabs, and random media slide-show output.
+Rule:
 
-Future versions may extend this further with more granular visibility logic, for example:
+- key: `MEDIA STATUS`
+- match type: `exact`
+- match value: `verified`
+- render mode: `text`
+- page contexts: `media-page`
 
-- per page context
-- per user group or access level
-- theme-specific compatibility improvements where view overrides conflict
+Result:
+
+The badge is shown on the media detail page, but not on media list pages, linked media tables, or album views.
 
 ---
 
 ## 13. Best practices
 
-Use short and stable note keys, for example:
+Recommended guidelines:
 
-    MEDIA LICENCE
-    MEDIA RIGHTS
-    MEDIA STATUS
-
-Prefer generic rules where possible, and add specific rules only when you need special styling or special tooltips.
-
-For portability and database safety, CSS class icons or URL-based icons are usually better than decorative Unicode symbols.
-
-Keep rule sets small and intentional at first.  
-A few well-structured rules are easier to maintain than many overlapping ones.
-
-If page-context visibility is introduced, start with `all` and only restrict rules where there is a real need for context-specific output.
+- use short, stable note keys such as `MEDIA LICENCE`, `MEDIA RIGHTS`, or `MEDIA STATUS`
+- prefer generic rules unless a specific value needs special styling
+- keep rule sets focused and easy to understand
+- use CSS-class icons or image / SVG URLs when portability matters
+- use page-context visibility only where output really needs to differ between views
+- start with `all` unless a rule truly belongs to only one or a few contexts
 
 ---
 
 ## 14. Related documents
 
-For the internal structure of rules and how the matching logic works, see:
+For more technical details, see:
 
 - `docs/rule-model.md`
 - `docs/architecture.md`
