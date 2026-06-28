@@ -14,7 +14,7 @@ Das Modul ist bereits testbar und im praktischen Einsatz grundsätzlich nutzbar,
 
 Aktueller Release-Stand:
 
-- `0.4.0-beta`
+- `0.5.0-beta`
 
 ## Funktionen
 
@@ -95,14 +95,17 @@ Das reduziert Duplikate und erleichtert spätere Erweiterungen.
 
 ## Unterstützte Ausgabekontexte
 
-Seit `0.4.0-beta` kann Media Badge Badges in diesen Kontexten ausgeben:
+Ab `0.5.0-beta` kann Media Badge Badges in diesen Kontexten ausgeben:
 
 - Medien-Detailseite
 - Medienlisten-Seite
-- verknüpfte Medien-Tabellen auf datensatzbezogenen Seiten
+- verknüpfte Medien-Tabellen auf Datensatzseiten
 - Standard-Multimedia-Tab
-- Album-Ansicht im Standard-Theme
-- Random-Media-Slideshow / Startseiten-Diashow
+- Album-/Galerieansicht im Standard-Theme
+- Zufallsmedien-/Startseiten-Slideshow
+- Medienobjekte in Tatsachen- und Ereignisansichten
+- verschachtelte Medienreferenzen innerhalb von Fakten/Ereignissen (über denselben allgemeinen Renderpfad)
+
 
 Damit sind Badges nicht mehr nur auf die Medien-Detailseite beschränkt.
 
@@ -122,16 +125,15 @@ Damit sind Badges nicht mehr nur auf die Medien-Detailseite beschränkt.
 ## Installation
 
 1. Den Modulordner an einen der folgenden Pfade kopieren:
-
-       modules_v4/media-badge/
-       modules_v4/webtrees-media-badge/
-
+   ```text
+   modules_v4/media-badge/
+   modules_v4/webtrees-media-badge/
+```
    Die zweite Variante ist praktisch, wenn das Repository-Archiv direkt von
    GitHub installiert wird.
-
 2. webtrees öffnen.
 3. Das Modul im Kontrollzentrum aktivieren.
-4. Die Konfigurationsseite des Moduls öffnen.
+4. Die Modulkonfiguration öffnen.
 5. Einen oder mehrere globale NOTE-Schlüssel eintragen.
 6. Badge-Regeln anlegen oder die Standardregeln verwenden.
 
@@ -148,6 +150,20 @@ Beispiel:
     MEDIA LICENCE
     MEDIA RIGHTS
     MEDIA STATUS
+
+## Standardverhalten
+
+Wenn keine gespeicherten Badge-Regeln vorhanden sind, verwendet das Modul ein eingebautes Standard-Regelset.
+
+Dieses enthält:
+
+- eine generische Fallback-Regel für den primären Schlüssel
+- spezifische Regeln für `CC BY 4.0`
+- spezifische Regeln für `CC BY-SA 4.0`
+- spezifische Regeln für `Public Domain`
+- eine Regel für Werte, die `private` enthalten
+
+Wenn keine spezifische Regel auf einen extrahierten Wert passt, kann weiterhin ein generisches Badge für diesen Schlüssel ausgegeben werden.
 
 ### Badge-Regeln
 
@@ -168,12 +184,6 @@ Typische Regelfelder sind:
 - Sortierreihenfolge
 
 Weitere Details sind in den Dateien unter `docs/` dokumentiert.
-
-## Standardverhalten
-
-Wenn keine spezifische Regel auf einen Wert passt, kann das Modul auf eine generische Regel für den jeweiligen Schlüssel zurückfallen.
-
-Dadurch bleibt die Ausgabe konsistent, auch wenn nicht jeder mögliche Wert eine eigene Spezialregel besitzt.
 
 ## Empfohlene Einsatzbereiche
 
@@ -225,15 +235,42 @@ Externe Bild- oder SVG-URLs funktionieren grundsätzlich, hängen aber ab von:
 
 Für häufig verwendete Icons kann es in zukünftigen Versionen sinnvoll sein, lokale Assets innerhalb des Moduls zu verwalten.
 
+### Sichtbarkeit nach Seitenkontext
+
+Die Sichtbarkeit einer Badge-Regel kann pro Seitenkontext gesteuert werden.
+
+Unterstützte Kontexte sind derzeit:
+
+- `all`
+- `media-page`
+- `media-list`
+- `linked-media-table`
+- `album-tab`
+- `media-tab`
+- `random-media-slide-show`
+
+Wenn `page_contexts` fehlt oder leer ist, wird die Regel als auf allen Seiten sichtbar behandelt.
+
+Wenn `all` gesetzt ist, haben zusätzliche Einzelkontexte keine weitere Bedeutung.
+
 ## Kompatibilität
 
 Das Modul ist derzeit am besten mit dem **Standard-Theme von webtrees** getestet.
 
-Wichtiger Hinweis:
+Wichtige Hinweise:
 
-- theme-spezifische Konflikte können auftreten, wenn ein anderes Theme dieselben medienbezogenen Core-Views überschreibt
-- Album-Rendering im Standard-Theme wird unterstützt
-- für Themes mit eigenen Media-Templates kann zusätzliche Kompatibilitätsarbeit nötig sein
+- Theme-spezifische Unterschiede sind weiterhin möglich, wenn ein Theme dieselben Core-Views überschreibt
+- die Album-/Galerieausgabe im Standard-Theme wird unterstützt
+- für bestimmte Konfliktfälle mit Themes oder Drittmodulen bevorzugt das Modul kleine wiederverwendbare Render-Fragmente statt vollständiger Template-Übernahmen
+- optionale Kompatibilität zu anderen Modulen kann gezielt ergänzt werden, ohne harte Laufzeit-Abhängigkeiten zu erzwingen
+
+### Kompatibilität mit Source Transcription
+
+Für Installationen mit dem Modul `hh_source_transcription` enthält Media Badge eine optionale Kompatibilität für ausgewählte medienbezogene Ansichten.
+
+Wenn beide Module dieselben webtrees-Views überschreiben, versucht Media Badge die Source-Transcription-Badges zusätzlich defensiv mit auszugeben, sofern das andere Modul verfügbar ist.
+
+Wenn das Modul nicht installiert ist oder sein Service nicht aufgelöst werden kann, wird einfach keine zusätzliche Ausgabe erzeugt.
 
 ## Datenbank- und Speicherhinweis
 
@@ -251,32 +288,7 @@ Zusätzliche Dokumentation befindet sich in:
 
 ## Projektstruktur
 
-    modules_v4/media-badge/
-    ├── module.php
-    ├── MediaBadgeModule.php
-    └── resources/
-        ├── css/
-        │   └── media-badge.css
-        └── views/
-            ├── components/
-            │   ├── media-badge.phtml
-            │   └── media-badge-list.phtml
-            ├── lists/
-            │   └── media-table.phtml
-            ├── modules/
-            │   ├── lightbox/
-            │   │   └── tab.phtml
-            │   ├── media/
-            │   │   └── tab.phtml
-            │   ├── media-list/
-            │   │   └── page.phtml
-            │   └── random_media/
-            │       └── slide-show.phtml
-            ├── admin/
-            │   ├── config.phtml
-            │   ├── badges.phtml
-            │   └── badge-edit.phtml
-            └── media-page.phtml
+Siehe docs/architecture.md
 
 ## Aktueller Beta-Fokus
 
@@ -292,22 +304,22 @@ Die aktuelle Beta konzentriert sich auf:
 
 ## Bekannte Einschränkungen
 
-- theme-spezifische Konflikte können weiterhin auftreten, wenn andere Themes dieselben Core-Media-Templates überschreiben
-- eine Suchintegration für Medien ist nicht enthalten, da die Core-Suche derzeit keine standardisierte Medien-Ergebnisansicht bereitstellt
-- Seitenkontext-spezifische Sichtbarkeitssteuerung ist noch nicht implementiert
-- Badge-Sichtbarkeit nach Benutzergruppe oder Zugriffslevel ist noch nicht implementiert
+- Theme-spezifische Konflikte sind weiterhin möglich, wenn ein Theme eigene Varianten derselben media-bezogenen Templates verwendet
+- je nach Theme kann für einzelne Ansichten zusätzliche Kompatibilitätsarbeit nötig sein
+- benutzer- oder gruppenabhängige Badge-Sichtbarkeit ist derzeit noch nicht implementiert
+- lokale Verwaltung eigener Icon-Assets ist noch nicht vollständig ausgebaut
 
 ## Roadmap
 
-Mögliche nächste Entwicklungsschritte sind:
+Mögliche nächste Entwicklungsschritte:
 
 - Badge-Sichtbarkeit nach Benutzergruppe / Zugriffslevel
-- Badge-Sichtbarkeit je Seitenkontext
-- Unterstützung lokaler Icon-Assets
-- bessere Vorschau in der Admin-Oberfläche
+- lokale Icon-Assets statt externer URLs
+- verbesserte Admin-Vorschau
 - Import / Export von Badge-Regeln
 - strengere Validierung für URL- und Regex-Regeln
-- zusätzliche Theme-Kompatibilitätsarbeit
+- weitere Theme-Kompatibilität
+- zusätzliche Badge-Quellen neben NOTE, z. B. weitere GEDCOM-Felder oder Metadaten
 
 ## Lizenz
 
