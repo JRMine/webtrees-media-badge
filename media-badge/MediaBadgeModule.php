@@ -94,17 +94,17 @@ class MediaBadgeModule extends AbstractModule implements ModuleCustomInterface, 
 
     public function customModuleAuthorName(): string
     {
-        return 'Dein Name';
+        return 'JRMine';
     }
 
     public function customModuleVersion(): string
     {
-        return '0.2.0-beta.1';
+        return '0.5.0-beta';
     }
 
     public function customModuleSupportUrl(): string
     {
-        return '';
+        return 'https://github.com/JRMine/webtrees-media-badge';
     }
 
     public function resourcesFolder(): string

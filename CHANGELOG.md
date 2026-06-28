@@ -124,3 +124,49 @@ All notable changes to this project are documented in this file.
 - Dieses Release ist eine erste testbare Vorabversion
 - Fokus liegt auf Architektur, Modul-Loading, Badge-Erkennung und erster Admin-Struktur
 - Noch nicht als stabile Produktivversion gedacht
+
+## [0.5.0-beta] - 2026-06-28
+
+### Added
+
+- Added badge visibility by page context through the `page_contexts` rule field.
+- Added admin UI support for editing page-context visibility in `badge-edit.phtml`.
+- Added rule overview output for configured page contexts in `badges.phtml`.
+- Added support for repository-root installation through a root `module.php` bootstrap file.
+- Added support for both installation layouts:
+  - `modules_v4/media-badge/`
+  - `modules_v4/webtrees-media-badge/`
+- Added stable view-namespace alias registration to improve compatibility across installation layouts.
+- Added optional compatibility with `hh_source_transcription` through a defensive `source-transcription-badge` component.
+- Added badge rendering support for direct media facts in fact and event views.
+- Added badge rendering support for nested media objects inside fact and event views.
+- Added updated English technical documentation for configuration, rule model, architecture, and changelog content.
+
+### Changed
+
+- Centralized page-context-aware badge resolution in the module rule pipeline.
+- Extended supported rendering contexts to cover fact/event media rendering paths in addition to existing media-related views.
+- Improved view integration so shared badge components are reused more consistently across contexts.
+- Refined the architecture and rule-model documentation to reflect the current implementation.
+- Clarified installation guidance for both lean module-folder installs and full repository-archive installs.
+
+### Fixed
+
+- Fixed badge rendering after component mix-ups between `media-badge.phtml` and `media-badge-list.phtml`.
+- Fixed rendering failure caused by accessing a non-public page-context constant from a view.
+- Fixed fallback behavior for keys without a value-specific matching rule.
+- Fixed missing badge rendering in additional media-related rendering paths.
+- Fixed defensive compatibility behavior so optional integrations fail silently instead of causing output errors.
+- Improved consistency of badge rendering in fact/event-related media contexts.
+
+### Notes
+
+- This release builds on `0.4.0-beta` and mainly expands context-aware rendering, compatibility, installation flexibility, and documentation.
+- Theme-specific conflicts may still exist when themes override the same core media templates.
+- User-group or access-level visibility is still not part of this release.
+
+### Known limitations
+
+- Theme compatibility is still best with the standard webtrees theme.
+- Themes that override media-related core views may require additional compatibility work.
+- Badge visibility by user role or access level is still not implemented.
