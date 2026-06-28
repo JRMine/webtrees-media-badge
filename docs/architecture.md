@@ -10,3 +10,6 @@ modules_v4/media-badge/
             ├── config.phtml
             ├── badges.phtml
             └── badge-edit.phtml
+
+Modules Compatibility Issues
+Media Badge should prefer compatibility through small reusable rendering fragments over full template ownership wherever possible.
