@@ -2,69 +2,38 @@
 
 declare(strict_types=1);
 
+use Fisharebest\Webtrees\Media;
+use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
+
 /**
- * Render a single prepared badge.
+ * Reusable badge list component.
  *
- * Important:
- * - This component only receives the final $badge array
- * - It does not know anything about $record or page_context
- * - Rule matching and context visibility are already resolved before this view
+ * Resolves all badges for a media record in the current page context,
+ * filters them by the requested position, and renders them using the
+ * shared single-badge component.
  *
- * @var array<string,mixed> $badge
+ * @var Media  $record
+ * @var string $position
+ * @var string $page_context
  */
 
-$render_mode = (string) ($badge['render_mode'] ?? 'text');
-$icon_type   = (string) ($badge['icon_type'] ?? 'class');
-$icon_value  = trim((string) ($badge['icon_value'] ?? ''));
-$label       = trim((string) ($badge['label'] ?? ''));
-$title       = trim((string) ($badge['title'] ?? ''));
-$class       = trim((string) ($badge['class'] ?? 'mbg-badge mbg-badge--generic'));
+$position     = $position ?? 'after-title';
+$page_context = $page_context ?? 'media-page';
 
-/**
- * Normalize "auto" into a concrete render mode.
- */
-if ($render_mode === 'auto') {
-    if ($icon_value !== '' && $label !== '') {
-        $render_mode = 'icon-text';
-    } elseif ($icon_value !== '') {
-        $render_mode = 'icon';
-    } else {
-        $render_mode = 'text';
-    }
-}
+$badges = array_values(array_filter(
+    MediaBadgeModule::resolveBadgesForMedia($record, $page_context),
+    static fn (array $badge): bool => ($badge['position'] ?? 'after-title') === $position
+));
 
-$show_icon = $render_mode !== 'text' && $icon_value !== '';
-$show_text = $render_mode !== 'icon' && $label !== '';
-
-/**
- * Nothing to render if neither icon nor text is available.
- */
-if (!$show_icon && !$show_text) {
+if ($badges === []) {
     return;
-}
-
-/**
- * Add icon-only helper class if needed.
- */
-if ($show_icon && !$show_text) {
-    $class .= ' mbg-badge--icon-only';
 }
 ?>
 
-<span class="<?= e($class) ?>"<?php if ($title !== '') : ?> title="<?= e($title) ?>"<?php endif ?>>
-    <?php if ($show_icon) : ?>
-        <span class="mbg-badge__icon" aria-hidden="true">
-            <?php if ($icon_type === 'class') : ?>
-                <i class="<?= e($icon_value) ?>"></i>
-            <?php elseif ($icon_type === 'url') : ?>
-                <img src="<?= e($icon_value) ?>" alt="" class="mbg-badge__icon-image">
-            <?php else : ?>
-                <?= e($icon_value) ?>
-            <?php endif ?>
-        </span>
-    <?php endif ?>
-
-    <?php if ($show_text) : ?>
-        <span class="mbg-badge__label"><?= e($label) ?></span>
-    <?php endif ?>
+<span class="mbg-badge-list mbg-badge-list--<?= e($position) ?>"
+      data-mbg-position="<?= e($position) ?>"
+      data-mbg-page-context="<?= e($page_context) ?>">
+    <?php foreach ($badges as $badge) : ?>
+        <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge', ['badge' => $badge]) ?>
+    <?php endforeach ?>
 </span>
