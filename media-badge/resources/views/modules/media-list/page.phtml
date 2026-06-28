@@ -122,6 +122,9 @@ use Vendor\Webtrees\Module\MediaBadge\MediaBadgeModule;
 
                                 <h4 class="card-title mb-0">
                                     <a href="<?= e($media_object->url()) ?>"><?= $media_object->fullName() ?></a>
+                                    <?= view(MediaBadgeModule::MODULE_NAME . '::components/source-transcription-badge', [
+                                        'record' => $media_object,
+                                    ]) ?>
                                 </h4>
 
                                 <?= view(MediaBadgeModule::MODULE_NAME . '::components/media-badge-list', [

@@ -1,0 +1,21 @@
+<?php
+
+declare(strict_types=1);
+
+use Fisharebest\Webtrees\Media;
+use Fisharebest\Webtrees\Registry;
+use Hartenthaler\Webtrees\Module\SourceTranscription\Application\Service\MediaBadgeService as SourceTranscriptionMediaBadgeService;
+
+/**
+ * @var Media $record
+ */
+
+if (!class_exists(SourceTranscriptionMediaBadgeService::class)) {
+    return;
+}
+
+try {
+    echo Registry::container()->get(SourceTranscriptionMediaBadgeService::class)->badgeHtml($record);
+} catch (Throwable) {
+    return;
+}
